@@ -1,0 +1,3 @@
+.env
+*.geany
+vendor

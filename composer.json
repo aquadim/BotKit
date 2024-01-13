@@ -1,0 +1,19 @@
+{
+    "name": "pydim/bot-kit",
+    "description": "Tools for creating bots",
+    "type": "project",
+    "authors": [
+        {
+            "name": "Вадим Королёв",
+            "email": "pydim@mail.ru"
+        }
+    ],
+    "require": {
+        "vlucas/phpdotenv": "^5.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "BotKit\\": "app/"
+        }
+    }
+}
