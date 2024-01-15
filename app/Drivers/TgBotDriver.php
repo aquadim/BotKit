@@ -3,6 +3,8 @@
 
 namespace BotKit\Drivers;
 
+use BotKit\Keyboards\Keyboard;
+
 use BotKit\User;
 use BotKit\EventData;
 use BotKit\Message;
@@ -67,7 +69,8 @@ class TgBotDriver implements Driver {
 		$url = "https://api.telegram.org/bot".$this->bot_token."/sendMessage?";
 		$params = array(
 			"chat_id" => $user->getPlatformId(),
-			"text" => $message->getText()
+			"text" => $message->getText(),
+			"reply_markup" => $this->getKeyboard($message->getKeyboard())
 		);
 		$response = file_get_contents($url.http_build_query($params));
 		$data = json_decode($response);
@@ -79,6 +82,36 @@ class TgBotDriver implements Driver {
 		$message->id = $data->result->message_id;
 		
 		return $message;
+	}
+
+	public function getKeyboard($kb) : string {
+		if ($kb === null) {
+			return '';
+		}
+
+		$kb_class = get_class($kb);
+		if (is_a($kb_class, 'BotKit\Keyboards\Keyboard', true)) {
+			// Обычная кнопка
+
+			$layout = [];
+			foreach ($kb->layout as $row) {
+				$layoutrow = [];
+				foreach ($row as $item) {
+					$button = $item;
+					$layoutrow[] = $button;
+				}
+				$layout[] = $layoutrow;
+			}
+			
+			$params = [
+				"keyboard" => $layout,
+				"resize_keyboard" => isset($kb->tg_resize) ? $kb->tg_resize : true,
+				"one_time_keyboard" => isset($kb->tg_onetime) ? $kb->tg_onetime : true,
+				"selective" => isset($kb->tg_selective) ? $kb->tg_selective : true
+			];
+		}
+
+		return json_encode($params, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
 	}
 
 	public function onStart() : void {

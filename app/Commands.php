@@ -6,6 +6,7 @@ namespace BotKit;
 use BotKit\User;
 use BotKit\EventData;
 use BotKit\Drivers\Driver;
+use BotKit\Keyboards;
 
 class Commands {
 
@@ -23,5 +24,16 @@ class Commands {
 	public static function commandNotFound(User $user, EventData $e, Driver $drv) {
 		$drv->sendMessage($user, Message::create("I don't know how to handle this command"));
 	}
-	
+
+	// Присылает меню
+	public static function menu(User $user, EventData $e, Driver $drv) {
+		$layout = [
+			["/schedule", "/grades", "/whatsnext"],
+			["/help"]
+		];
+		$drv->sendMessage(
+			$user,
+			Message::create("Главное меню")->withKeyboard(new Keyboards\MenuKeyboard($layout))
+		);
+	}
 }
