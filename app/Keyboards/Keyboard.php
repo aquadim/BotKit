@@ -10,4 +10,9 @@ abstract class Keyboard {
 
 	// Расположение кнопок в клавиатуре
 	private array $layout;
+
+	// Возвращает расположение кнопок
+	public function getLayout() : array {
+		return $this->layout;
+	}
 }

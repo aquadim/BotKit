@@ -2,7 +2,7 @@
 // Перечисление для состояний пользователей
 // Этот файл заполняется разработчиком
 
-namespace BotKit;
+namespace BotKit\Enums;
 
 enum FsmState {
 	case Undefined;

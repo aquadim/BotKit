@@ -8,7 +8,7 @@ class User {
 	private $platform_id;
 
 	// Состояние пользователя
-	private FsmState $state;
+	private Enums\FsmState $state;
 
 	// Имя пользователя
 	private string $first_name;
@@ -16,7 +16,7 @@ class User {
 	// Фамилия пользователя
 	private string $last_name;
 
-	public function __construct($platform_id, $first_name, $last_name, FsmState $state) {
+	public function __construct($platform_id, $first_name, $last_name, Enums\FsmState $state) {
 		$this->platform_id = $platform_id;
 		$this->first_name = $first_name;
 		$this->last_name = $last_name;
@@ -24,7 +24,7 @@ class User {
 	}
 
 	// Возвращает состояние пользователя в машине состояний
-	public function getState() : FsmState {
+	public function getState() : Enums\FsmState {
 		return $this->state;
 	}
 

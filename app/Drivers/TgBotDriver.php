@@ -4,11 +4,11 @@
 namespace BotKit\Drivers;
 
 use BotKit\Keyboards\Keyboard;
-
 use BotKit\User;
 use BotKit\EventData;
 use BotKit\Message;
-use BotKit\FsmState;
+use BotKit\Enums\FsmState;
+use BotKit\Enums\ImageAttachmentType;
 
 class TgBotDriver implements Driver {
 	#region События этого драйвера
@@ -18,8 +18,12 @@ class TgBotDriver implements Driver {
 	// Токен бота
 	private string $bot_token;
 
+	// Базовый адрес API
+	private string $api_base;
+
 	public function __construct($bot_token) {
 		$this->bot_token = $bot_token;
+		$this->api_base = "https://api.telegram.org/bot".$this->bot_token;
 	}
 
 	public function willHandleRequest() : bool {
@@ -66,7 +70,47 @@ class TgBotDriver implements Driver {
 	}
 	
 	public function sendMessage(User $user, Message $message) : Message {
-		$url = "https://api.telegram.org/bot".$this->bot_token."/sendMessage?";
+		if ($message->hasImages()) {
+			// Если сообщение содержит изображения, это совсем другой метод
+			// TODO: добавить поддержку отсылки нескольких фотографий
+
+			// Интерпретация свойства $value в изображении
+			$image = $message->getImages()[0];
+			$value = $image->getValue();
+			
+			switch ($image->getType()) {
+				case ImageAttachmentType::FromFile:
+					$photo_object = new \CURLFile($value);
+					break;
+				case ImageAttachmentType::FromUrl:
+				case ImageAttachmentType::FromExisting:
+					$photo_object = $value;
+					break;
+				default:
+					throw new \Exception("Not implemented");
+			}
+
+			// Отправка изображения
+			$params = [
+				"chat_id" => $user->getPlatformId(),
+				"caption" => $message->getText(),
+				"photo" => $photo_object
+			];
+			$ch = curl_init($this->api_base."/sendPhoto");
+			curl_setopt($ch, CURLOPT_POST, 1);
+			curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+			curl_setopt($ch, CURLOPT_HEADER, false);
+			$response = curl_exec($ch);
+
+			var_dump($response);
+
+			// TODO: сохранять ID изображения после его отправки
+			
+			return $message;
+		}
+
+		$url = $this->api_base."/sendMessage?";
 		$params = array(
 			"chat_id" => $user->getPlatformId(),
 			"text" => $message->getText(),
@@ -91,13 +135,13 @@ class TgBotDriver implements Driver {
 
 		$kb_class = get_class($kb);
 		if (is_a($kb_class, 'BotKit\Keyboards\Keyboard', true)) {
-			// Обычная кнопка
+			// Обычная клавиатура
 
 			$layout = [];
 			foreach ($kb->layout as $row) {
 				$layoutrow = [];
 				foreach ($row as $item) {
-					$button = $item;
+					$button = $item->getText();
 					$layoutrow[] = $button;
 				}
 				$layout[] = $layoutrow;
