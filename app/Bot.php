@@ -16,6 +16,12 @@ class Bot {
 	private $callbacks = [];
 	private $fallback;
 
+	private $need_db;
+
+	public function __construct($need_db = true) {
+		$this->need_db = $need_db;
+	}
+
 	// Загружает драйвер
 	public function loadDriver($driver) {
 		if ($this->driver_loaded == true) {

@@ -9,6 +9,7 @@ use BotKit\EventData;
 use BotKit\Message;
 use BotKit\Enums\FsmState;
 use BotKit\Enums\ImageAttachmentType;
+use BotKit\Models;
 
 class TgBotDriver implements Driver {
 	#region События этого драйвера
@@ -65,6 +66,12 @@ class TgBotDriver implements Driver {
 			default:
 				break;
 		}
+
+		// Поиск пользователя в БД
+		$db_object = Models\TgUser::where([
+			['platform_id', '=', $tgid],
+			['hidden', '=', false]
+		]);
 
 		return new User($tgid, $first_name, $last_name, $state);
 	}

@@ -17,6 +17,14 @@ $tgdriver = new TgBotDriver($_ENV['tg_token']);
 $bot = new Bot();
 $bot->loadDriver($tgdriver);
 
+$bot->on(Driver::MSG_PLAIN, [Commands::class, 'helloWorldThenAskNick'], function ($u) {
+	return $u->getState == FsmState::HelloWorld;
+})
+
+$bot->on(Driver::MSG_PLAIN, [Commands::class, 'askAge'], function($u) {
+	return $u->getState == FsmState::AnsweredNick;
+})
+
 // Отправка меню
 $bot->onCommand('/menu', [Commands::class, 'menu']);
 

@@ -16,11 +16,15 @@ class User {
 	// Фамилия пользователя
 	private string $last_name;
 
-	public function __construct($platform_id, $first_name, $last_name, Enums\FsmState $state) {
+	// Связанный объект базы данных
+	private $db_object;
+
+	public function __construct($platform_id, $first_name, $last_name, Enums\FsmState $state, $db_object) {
 		$this->platform_id = $platform_id;
 		$this->first_name = $first_name;
 		$this->last_name = $last_name;
 		$this->state = $state;
+		$this->db_object = $db_object;
 	}
 
 	// Возвращает состояние пользователя в машине состояний
