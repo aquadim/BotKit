@@ -40,13 +40,16 @@ class Commands {
 	}
 
 	// Отправка изображения gravatar по email
-	public static function gravatar(User $user, EventData $e, Driver $drv) {
-		$parts = explode(" ", $e->getText());
-		$email = $parts[1];
+	public static function gravatar(User $user, EventData $e, Driver $drv, $email, $size=256) {
 		$hash = hash('sha256', $email);
-		$url = 'https://www.gravatar.com/avatar/'.$hash."?s=512";
+		$url = 'https://www.gravatar.com/avatar/'.$hash."?s=".$size;
 
 		$msg = Message::create("Граватар почты $email:")->withImage(ImageAttachment::fromUrl($url));
+		$drv->sendMessage($user, $msg);
+	}
+
+	public static function gravatarHelp(User $user, EventData $e, Driver $drv) {
+		$msg = Message::create("Справка по команде /gravatar:\nЭта команда присылает граватар человека\n/gravatar <почта> [размер изображения]");
 		$drv->sendMessage($user, $msg);
 	}
 }

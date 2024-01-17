@@ -30,7 +30,7 @@ class Bot {
 	}
 
 	// Добавляет обработчик события
-	public function on(int $event_type, $callback, $match_condition = null) {
+	public function on(int $event_type, $callback, $match_condition=null, $parameters=null) {
 		$this->callbacks[$event_type][] = [$match_condition, $callback];
 	}
 
@@ -38,6 +38,22 @@ class Bot {
 	public function onCommand(string $commandText, $callback) {
 		$this->on(Driver::MSG_PLAIN, $callback, function($u, $e) use ($commandText) {
 			return $e->textIs($commandText);
+		});
+	}
+
+	// Регистрирует обработчик команды с параметрами (например /help {topic})
+	// Параметры команды передадутся в обработчик как аргументы функции
+	public function onCommandWithParams(string $pattern, $callback) {
+		// Определяем что будет параметрами
+		$real_pattern = '/^'.preg_replace(
+			['/\//','/{(\w+)}/'],
+			['\\\/', '(?<$1>.*)'],
+			$pattern
+		).'$/';
+		
+		$this->on(Driver::MSG_PLAIN, $callback, function($u, $e, $bot, &$named_groups) use ($real_pattern) {
+			echo "Checking pattern: $real_pattern with text: ".$e->getText()."\n";
+			return preg_match($real_pattern, $e->getText(), $named_groups);
 		});
 	}
 
@@ -71,17 +87,30 @@ class Bot {
 	// Если обработчик подходит, то он выполняется, а скрипт завершает выполнение
 	private function matchEvents($event_type) {
 		foreach ($this->callbacks[$event_type] as $callback) {
-			if ($callback[0] === null) {
-				// Условие выполнения не было указано, это значит что оно всегда истино
-				$check = true;
-			} else {
-				$check = call_user_func($callback[0], $this->user, $this->event_data, $this);
+
+			// Параметры функции обратного вызова
+			// Например при команде /help {topic} этот массив может выглядеть так: ['topic'=>'history']
+			// Предопределённые элементы: user, e, drv. Эти параметры всегда передадутся в обработчик
+			$named_params = [];
+
+			$check_params = array($this->user, $this->event_data, $this, &$named_params);
+			if ($callback[0] !== null && call_user_func_array($callback[0], $check_params) == false) {
+				continue;
 			}
 
-			if ($check == true) {
-				call_user_func($callback[1], $this->user, $this->event_data, $this->driver);
-				exit();
-			}
+			// Фильтрование параметров таким образом, чтобы оставить только строковые ключи
+			$named_params = array_filter($named_params, function($key) {
+				return !is_numeric($key);
+			}, ARRAY_FILTER_USE_KEY);
+
+			$named_params['user'] = $this->user;
+			$named_params['e'] = $this->event_data;
+			$named_params['drv'] = $this->driver;
+
+			var_dump($named_params);
+
+			call_user_func_array($callback[1], $named_params);
+			exit();
 		}
 	}
 }

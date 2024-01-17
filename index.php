@@ -27,10 +27,10 @@ $bot->onCommand('/help', [Commands::class, 'displayHelp']);
 $bot->onCommand('/picture', [Commands::class, 'kitty']);
 
 // Отправка граватара
-// TODO: реализовать метод onCommandWithParams который схватывает текст и
-// передаёт его как параметр в callback
-$bot->on(Driver::MSG_PLAIN, [Commands::class, 'gravatar'], function ($u, $e, $b) {
-	return str_contains($e->getText(), "/gravatar");
+$bot->onCommandWithParams('/gravatar {email} {size}', [Commands::class, 'gravatar']);
+$bot->onCommandWithParams('/gravatar {email}', [Commands::class, 'gravatar']);
+$bot->on(Driver::MSG_PLAIN, [Commands::class, 'gravatarHelp'], function ($u, $e) {
+	return preg_match('/^\/gravatar/', $e->getText());
 });
 
 // Ни одно условие не совпало
