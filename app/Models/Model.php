@@ -7,7 +7,6 @@ namespace BotKit\Models;
 use BotKit\Database;
 
 class Model {
-	protected static $table_name;
 	protected static $allowed_columns;
 
 	private static function allowedColumnsSQL() {
@@ -30,5 +29,9 @@ class Model {
 		}
 		
 		$sql = "SELECT ".$this->allowedColumnsSQL()." FROM ".static::$table_name." WHERE ".$conditions_sql;
+	}
+
+	public static function sayTableName() {
+		echo static::$table_name;
 	}
 }
