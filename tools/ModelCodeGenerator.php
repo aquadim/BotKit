@@ -13,12 +13,6 @@ require_once __DIR__.'/../vendor/autoload.php';
 
 use BotKit\Common\Database;
 
-enum ColumnType {
-	case TrueFalse;
-	case Number;
-	case Text;
-}
-
 // Таблица БД
 /* Таблицу следует создавать в единственном числе, т.к. класс создастся с
 названием как раз имени. (Например: Для таблицы 'user' будет создан класс
@@ -52,6 +46,9 @@ class Table {
 		$create_update_params = '';
 		$create_update_binds = '';
 
+		$max_column_length = '';
+		$comments = '';
+		
 		$insert_columns = '';
 		$insert_values = '';
 		
@@ -64,6 +61,7 @@ class Table {
 				continue;
 			}
 			$column_name = $column->getName();
+			$max_column_length = max(mb_strlen($column_name), $max_column_length);
 
 			$create_update_params .= "\$$column_name";
 			$create_update_binds .= "\t\t\$statement->bindValue(':$column_name', \$$column_name);\n";
@@ -80,6 +78,24 @@ class Table {
 			}
 		}
 
+		// Генерация комментариев
+		$comment_line = "\t// %' ".($max_column_length + 1)."s : %s\n";
+		foreach ($this->columns as $column) {
+			if ($column->isPrimary()) {
+				$col_comment = 'Первичный ключ';
+			} else {
+				$col_comment = $column->getComment();
+				if (strlen($col_comment) == 0) {
+					$col_comment = 'Комментарий не указан';
+				}
+			}
+
+			$comments .= sprintf($comment_line,
+				$column->getName(),
+				$col_comment
+			);
+		}
+
 		return sprintf($template_string,
 			$this->getName().'Trait',
 			$this->name,
@@ -89,7 +105,8 @@ class Table {
 			$create_update_binds,
 			$create_update_params,
 			$update_sets,
-			$create_update_binds
+			$create_update_binds,
+			$comments
 		);
 	}
 
@@ -102,31 +119,18 @@ class Table {
 }
 
 class Column {
-	private string $name;
-	private ColumnType $type;
-	private bool $is_primary;
-	private bool $is_nullable_or_has_default;
-	private string $comment;
 
 	public function __construct(
-		string $name,
-		ColumnType $type,
-		bool $is_primary,
-		bool $is_nullable_or_has_default,
-		string $comment = ''
-	)
-	{
-		$this->name = $name;
-		$this->type = $type;
-		$this->is_primary = $is_primary;
-		$this->is_nullable_or_has_default = $is_nullable_or_has_default;
-		$this->comment = $comment;
-	}
+		private string $name,
+		private bool $is_primary,
+		private string $comment
+	) {}
 
 	public function isPrimary() : bool {
 		return $this->is_primary;
 	}
 
+	// Возвращает название колонки, но добавляет знак доллара перед ним
 	public function getNameAsVariable() : string {
 		return '$'.$this->name;
 	}
@@ -134,7 +138,12 @@ class Column {
 	public function getName() : string {
 		return $this->name;
 	}
+
+	public function getComment() : string {
+		return $this->comment;
+	}
 }
+
 
 $dotenv = \Dotenv\Dotenv::createImmutable(__DIR__.'/..');
 $dotenv->load();
@@ -142,44 +151,64 @@ $dotenv->load();
 Database::setCustomDsnValues('localhost', 'information_schema');
 $db = Database::getConnection();
 
-// Получение всех таблиц
-$all_tables = $db->prepare("SELECT `TABLE_NAME` FROM `TABLES` WHERE `TABLE_SCHEMA`=:table_schema");
-$all_tables->bindValue(':table_schema', $_ENV['db_name']);
-$all_tables->execute();
-while (($row = $all_tables->fetch()) !== false) {
-    var_dump($row);
-}
-exit();
+// Запрос на получение всех таблиц в БД
+$all_tables = $db->prepare("
+	SELECT `TABLE_NAME` FROM `TABLES` WHERE `TABLE_SCHEMA`=:table_schema");
 
-$models = [];
-//~ $models[] = new Table("user", [
-	//~ new Column('id', ColumnType::Number, true, false),
-	//~ new Column('first_name', ColumnType::Text, false, false),
-	//~ new Column('last_name', ColumnType::Text, false, true, 'Last name of the person')
-//~ ]);
+// Запрос на получение всех колонок таблицы
+$all_columns = $db->prepare("
+	SELECT `COLUMN_NAME`, `COLUMN_COMMENT`, `COLUMN_KEY`
+	FROM `COLUMNS`
+	WHERE `TABLE_SCHEMA`=:table_schema AND `TABLE_NAME`=:table_name
+	ORDER BY `ORDINAL_POSITION`");
+
+// Привязка данных
+$all_tables->bindValue(':table_schema', $_ENV['db_name']);
+$all_columns->bindValue(':table_schema', $_ENV['db_name']);
+$all_columns->bindParam(':table_name', $table_name);
+
+// Сбор таблиц
+$all_tables->execute();
+$tables = [];
+while (($row_table = $all_tables->fetch()) !== false) {
+	$table_name = $row_table['TABLE_NAME'];
+	$all_columns->execute();
+
+	// Сбор всех колонок таблицы
+	$table_columns = [];
+	while (($row_table_columns = $all_columns->fetch()) !== false) {
+		$table_columns[] = new Column(
+			$row_table_columns['COLUMN_NAME'],
+			$row_table_columns['COLUMN_KEY'] === 'PRI',
+			$row_table_columns['COLUMN_COMMENT']
+		);
+	}
+
+	// Добавление модели в массив
+	$tables[] = new Table($table_name, $table_columns);
+}
 
 define('models_dir', __DIR__.'/../app/Models/');
 $trait_template = file_get_contents(__DIR__.'/TraitTemplate.php');
 $class_template = file_get_contents(__DIR__.'/ClassTemplate.php');
 
-foreach ($models as $model) {
-	echo "Создание файлов для модели: ".$model->getName()."\n";
+foreach ($tables as $table) {
+	echo "Создание файлов для таблицы: ".$table->getName()."\n";
 
-	$class_filename = models_dir.$model->getClassFileName();
-	$trait_filename = models_dir.$model->getTraitFileName();
+	$class_filename = models_dir.$table->getClassFileName();
+	$trait_filename = models_dir.$table->getTraitFileName();
 
 	if (file_exists($class_filename)) {
-		echo "Внимание: класс $class_filename уже существует.
-		Его обновление приведёт к перезаписи данных. Удалите этот файл, если хотите его обновить\n";
+		echo "\033[93mВнимание: класс уже существует и не будет перезаписан\033[0m\n";
 	} else {
 		$fp = fopen($class_filename, 'w');
-		fwrite($fp, $model->getClassCode($class_template));
+		fwrite($fp, $table->getClassCode($class_template));
 		fclose($fp);
 	}
 
-	$fp = fopen($class_filename, 'w');
-	fwrite($fp, $model->getTraitCode($trait_template));
+	$fp = fopen($trait_filename, 'w');
+	fwrite($fp, $table->getTraitCode($trait_template));
 	fclose($fp);
 
-	echo "Успешно сгенерировано\n";
+	echo "\033[92mУспешно сгенерировано\033[0m\n";
 }

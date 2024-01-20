@@ -5,7 +5,9 @@ namespace BotKit\Models;
 
 trait %s {
 	protected static string $table_name = "%s";
-	
+
+	//==Пояснения колонок==//
+%10$s
 	public static function create(%s) {
 		$db = Database::getConnection();
 		$statement = $db->prepare(

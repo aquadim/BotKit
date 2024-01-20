@@ -10,17 +10,12 @@ class Database {
 	
 	private function __construct($dsn) {
 		// https://mariadb.com/resources/blog/developer-quickstart-php-data-objects-and-mariadb/
-		echo "Accepted dsn: $dsn";
 		$options = [
 			\PDO::ATTR_EMULATE_PREPARES   => false,
 			\PDO::ATTR_ERRMODE            => \PDO::ERRMODE_EXCEPTION,
 			\PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
 		];
 		$this->connection = new \PDO($dsn, $_ENV['db_user'], $_ENV['db_password']);
-	}
-
-	function __destruct() {
-		$this->connection->close();
 	}
 
 	public static function setCustomDsnValues($host, $db_name) : void {
