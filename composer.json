@@ -2,6 +2,7 @@
     "name": "pydim/bot-kit",
     "description": "Tools for creating bots",
     "type": "project",
+    "license": "GPL-3.0-only",
     "authors": [
         {
             "name": "Вадим Королёв",
