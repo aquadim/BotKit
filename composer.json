@@ -14,7 +14,13 @@
     },
     "autoload": {
         "psr-4": {
-            "BotKit\\": "src/"
+            "BotKit\\Attachments\\": "src/Attachments",
+            "BotKit\\Common\\": "src/Common",
+            "BotKit\\Drivers\\": "src/Drivers",
+            "BotKit\\Enums\\": "src/Enums",
+            "BotKit\\KeyboardButtons\\": "src/KeyboardButtons",
+            "BotKit\\Models\\": "src/Models",
+            "BotKit\\Tools\\": "tools/"
         }
     }
 }

@@ -22,6 +22,9 @@ class TgBotDriver implements Driver {
 	// Базовый адрес API
 	private string $api_base;
 
+	// Название платформы бота
+	private string $platform_name = "telegram.org";
+
 	public function __construct($bot_token) {
 		$this->bot_token = $bot_token;
 		$this->api_base = "https://api.telegram.org/bot".$this->bot_token;
@@ -67,11 +70,11 @@ class TgBotDriver implements Driver {
 				break;
 		}
 
-		//~ // Поиск пользователя в БД
-		//~ $db_object = Models\TgUser::where([
-			//~ ['platform_id', '=', $tgid],
-			//~ ['hidden', '=', false]
-		//~ ]);
+		// Поиск пользователя в БД
+		$db_object = Models\User::where([
+			['id_on_platform', '=', $tgid],
+			['platform', '=', $this->platform_name]
+		]);
 
 		return new User($tgid, $first_name, $last_name, $state, null);
 	}

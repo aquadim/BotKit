@@ -4,7 +4,7 @@
 
 namespace BotKit\Enums;
 
-enum FsmState {
-	case Undefined;
-	case HelloWorld;
+enum FsmState : int {
+	case Undefined = 0;
+	case HelloWorld = 1;
 }

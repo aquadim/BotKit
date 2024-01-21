@@ -144,7 +144,53 @@ class Column {
 	}
 }
 
-Database::setCustomDsnValues('localhost', 'information_schema');
+$trait_template = '<?php
+// Автоматически сгенерировано 
+
+namespace BotKit\Models;
+
+use BotKit\Common\Database;
+
+trait %s {
+	protected static string $table_name = "%s";
+
+	//==Пояснения колонок==//
+%10$s
+	public static function create(%s) {
+		$db = Database::getConnection();
+		$statement = $db->prepare(
+			"INSERT INTO ".static::$table_name." (%s) VALUES (%s)"
+		);
+%s
+		$statement->execute();
+	}
+
+	public static function updateObject($id,%s) {
+		$db = Database::getConnection();
+		$statement = $db->prepare(
+			"UPDATE ".static::$table_name." SET %s WHERE id=:id"
+		);
+		$statement->bindValue(":id", $id);
+%s
+		$statement->execute();
+	}
+}';
+
+$class_template = '<?php
+// Автоматически сгенерировано 
+
+namespace BotKit\Models;
+
+class %s extends Model {
+	use %s;
+}';
+
+Database::setCustomDsnValues(
+	'localhost',
+	'information_schema',
+	$_ENV['db_user'],
+	$_ENV['db_password']
+);
 $db = Database::getConnection();
 
 // Запрос на получение всех таблиц в БД
@@ -185,8 +231,6 @@ while (($row_table = $all_tables->fetch()) !== false) {
 }
 
 define('models_dir', rootdir.'src/Models/');
-$trait_template = file_get_contents(__DIR__.'/TraitTemplate.php');
-$class_template = file_get_contents(__DIR__.'/ClassTemplate.php');
 
 foreach ($tables as $table) {
 	echo "Создание файлов для таблицы: ".$table->getName()."\n";
