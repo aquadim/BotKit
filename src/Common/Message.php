@@ -1,7 +1,7 @@
 <?php
 // Класс сообщения
 
-namespace BotKit;
+namespace BotKit\Common;
 
 class Message {
 

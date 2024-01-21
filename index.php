@@ -3,27 +3,18 @@
 
 namespace BotKit;
 
-require_once "vendor/autoload.php";
+require_once __DIR__.'/src/bootstrap.php';
 
 use BotKit\Drivers\Driver;
 use BotKit\Drivers\TgBotDriver;
 use BotKit\Enums\FsmState;
-
-$dotenv = \Dotenv\Dotenv::createImmutable(__DIR__);
-$dotenv->load();
+use BotKit\Common\Commands;
+use BotKit\Common\Bot;
 
 $tgdriver = new TgBotDriver($_ENV['tg_token']);
 
 $bot = new Bot();
 $bot->loadDriver($tgdriver);
-
-$bot->on(Driver::MSG_PLAIN, [Commands::class, 'helloWorldThenAskNick'], function ($u) {
-	return $u->getState == FsmState::HelloWorld;
-})
-
-$bot->on(Driver::MSG_PLAIN, [Commands::class, 'askAge'], function($u) {
-	return $u->getState == FsmState::AnsweredNick;
-})
 
 // Отправка меню
 $bot->onCommand('/menu', [Commands::class, 'menu']);

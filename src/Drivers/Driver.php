@@ -3,9 +3,9 @@
 
 namespace BotKit\Drivers;
 
-use BotKit\User;
-use BotKit\Message;
-use BotKit\EventData;
+use BotKit\Common\User;
+use BotKit\Common\Message;
+use BotKit\Common\EventData;
 
 interface Driver {
 	public const MSG_PLAIN		= 0; // Обычное сообщение

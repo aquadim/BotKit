@@ -3,6 +3,8 @@
 
 namespace BotKit\Models;
 
+use BotKit\Common\Database;
+
 trait %s {
 	protected static string $table_name = "%s";
 

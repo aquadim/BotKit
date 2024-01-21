@@ -1,7 +1,7 @@
 <?php
 // Класс бота
 
-namespace BotKit;
+namespace BotKit\Common;
 
 use BotKit\Drivers\Driver;
 
@@ -58,7 +58,6 @@ class Bot {
 		).'$/';
 		
 		$this->on(Driver::MSG_PLAIN, $callback, function($u, $e, $bot, &$named_groups) use ($real_pattern) {
-			echo "Checking pattern: $real_pattern with text: ".$e->getText()."\n";
 			return preg_match($real_pattern, $e->getText(), $named_groups);
 		});
 	}
@@ -112,8 +111,6 @@ class Bot {
 			$named_params['user'] = $this->user;
 			$named_params['e'] = $this->event_data;
 			$named_params['drv'] = $this->driver;
-
-			var_dump($named_params);
 
 			call_user_func_array($callback[1], $named_params);
 			exit();

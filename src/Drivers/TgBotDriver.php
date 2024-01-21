@@ -4,9 +4,9 @@
 namespace BotKit\Drivers;
 
 use BotKit\Keyboards\Keyboard;
-use BotKit\User;
-use BotKit\EventData;
-use BotKit\Message;
+use BotKit\Common\User;
+use BotKit\Common\EventData;
+use BotKit\Common\Message;
 use BotKit\Enums\FsmState;
 use BotKit\Enums\ImageAttachmentType;
 use BotKit\Models;
@@ -67,13 +67,13 @@ class TgBotDriver implements Driver {
 				break;
 		}
 
-		// Поиск пользователя в БД
-		$db_object = Models\TgUser::where([
-			['platform_id', '=', $tgid],
-			['hidden', '=', false]
-		]);
+		//~ // Поиск пользователя в БД
+		//~ $db_object = Models\TgUser::where([
+			//~ ['platform_id', '=', $tgid],
+			//~ ['hidden', '=', false]
+		//~ ]);
 
-		return new User($tgid, $first_name, $last_name, $state);
+		return new User($tgid, $first_name, $last_name, $state, null);
 	}
 	
 	public function sendMessage(User $user, Message $message) : Message {

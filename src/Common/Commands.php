@@ -1,10 +1,8 @@
 <?php
 // Команды бота
 
-namespace BotKit;
+namespace BotKit\Common;
 
-use BotKit\User;
-use BotKit\EventData;
 use BotKit\Drivers\Driver;
 use BotKit\Keyboards;
 use BotKit\Attachments\ImageAttachment;

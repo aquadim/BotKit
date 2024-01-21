@@ -1,14 +1,16 @@
 <?php
 // Класс пользователя бота
 
-namespace BotKit;
+namespace BotKit\Common;
+
+use BotKit\Enums\FsmState;
 
 class User {
 	// ID пользователя на платформе
 	private $platform_id;
 
 	// Состояние пользователя
-	private Enums\FsmState $state;
+	private FsmState $state;
 
 	// Имя пользователя
 	private string $first_name;
@@ -19,7 +21,7 @@ class User {
 	// Связанный объект базы данных
 	private $db_object;
 
-	public function __construct($platform_id, $first_name, $last_name, Enums\FsmState $state, $db_object) {
+	public function __construct($platform_id, $first_name, $last_name, FsmState $state, $db_object) {
 		$this->platform_id = $platform_id;
 		$this->first_name = $first_name;
 		$this->last_name = $last_name;
@@ -28,7 +30,7 @@ class User {
 	}
 
 	// Возвращает состояние пользователя в машине состояний
-	public function getState() : Enums\FsmState {
+	public function getState() : FsmState {
 		return $this->state;
 	}
 

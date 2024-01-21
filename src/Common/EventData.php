@@ -1,7 +1,7 @@
 <?php
 // Класс события
 
-namespace BotKit;
+namespace BotKit\Common;
 
 class EventData {
 
