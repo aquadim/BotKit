@@ -1,0 +1,4 @@
+vendor
+.env
+BotKit.geany
+composer.lock
