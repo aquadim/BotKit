@@ -1,13 +1,17 @@
 <?php
 // Файл на который поступают запросы
 
-require '../bot/bootstrap.php';
+require '../botkit/bootstrap.php';
 
-// Загрузка драйверов
+use BotKit\Bot;
+
+// Загрузка драйверов. Этот код можно редактировать до строки
+// "Нельзя редактировать дальше"
 use BotKit\Drivers\TestingDriver;
 
 Bot::loadDriver(new TestingDriver());
+// Нельзя редактировать дальше
 
-Bot::ensureDriversLoaded();
+Bot::onLoadingFinished();
 
-require root_dir . '/src/handle.php';
+require root_dir . '/botkit/routing.php';

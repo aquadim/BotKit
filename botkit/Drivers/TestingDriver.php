@@ -4,13 +4,15 @@
 namespace BotKit\Drivers;
 
 use BotKit\Models\User as UserModel;
-use BotKit\Models\Chats\Chat;
+use BotKit\Models\Chats\IChat;
+use BotKit\Models\Chats\DirectChat;
 use BotKit\Models\Messages\TextMessage;
-use BotKit\Models\Events\Event;
+use BotKit\Models\Events\IEvent;
 use BotKit\Models\Events\UnknownEvent;
 use BotKit\Models\Events\TextMessageEvent;
 use BotKit\Database;
-use BotKit\Entities\{User as UserEntity, Platform};
+
+use BotKit\Models\Messages\IMessage;
 
 class TestingDriver implements IDriver {
 
@@ -21,7 +23,7 @@ class TestingDriver implements IDriver {
     private static string $domain = "example.com";
 
     // JSON данные полученного POST запроса
-    private static string $post_body;
+    private array $post_body;
 
     #region IDriver
     public function forThis() : bool {
@@ -33,18 +35,33 @@ class TestingDriver implements IDriver {
         }
     }
 
-    public function getEvent() : Event {
-        $this->post_body = json_decode(
-            file_get_contents("php://input"),
-            true);
-        $type       = $this->post_body['type'];
-        $details    = $this->post_body['details'];
-        $chat       = new Chat(42);
+    public function getUserIdOnPlatform() : string {
+        return $this->post_body['user']['id'];
+    }
+    
+    public function getUserName() : string {
+        return $this->post_body['user']['username'];
+    }
+
+    public function getEvent(UserModel $user_model) : IEvent {
+        $type               = $this->post_body['type'];
+        $details            = $this->post_body['details'];
+
+        $chat_with_user         = new DirectChat($this->getUserIdOnPlatform());
+        $chat_of_msg            = $chat_with_user;
+        $this->start_user_state = $user_model->getState();
 
         switch ($type) {
+            case 'newMessage':
+                return new TextMessageEvent(
+                    $details['msgId'],
+                    $user_model,
+                    $chat_of_msg,
+                    $details['text'],
+                    []
+                );
             default:
-                $user = $this->getUserModel($details['userId']);
-                return new UnknownEvent($user);
+                return new UnknownEvent($user_model, $chat_of_msg);
         }
 
         // Интерфейс тестов запрашивает установку состояния
@@ -102,23 +119,6 @@ class TestingDriver implements IDriver {
             //~ );
         //~ }
     }
-
-    public function getUserModel(string $id_on_platform) : UserModel {
-        // Получение объекта сущности
-        $em = Database::getEM();
-        $query = $em->createQuery(
-            'SELECT user, platform FROM '.UserEntity::class.' user '.
-            'JOIN user.platform platform '.
-            'WHERE platform.domain="'.self::$domain.'" '.
-            'AND user.id_on_platform=:id_on_platform');
-        $query->setParameters(['id_on_platform'=>$id_on_platform]);
-        $user_entity = $query->getResult();
-
-        // Возврат объекта пользователя
-        return new UserModel(
-            $user_entity,
-            $this->post_body['details']['userName']);
-    }
     
     public function reply(
         TextMessageEvent $e,
@@ -133,7 +133,7 @@ class TestingDriver implements IDriver {
         $this->sendInternal($msg, $reply_to_id);
     }
 
-    public function sendMessage(User $u, IMessage $msg) : void {
+    public function sendDirectMessage(UserModel $user, IMessage $msg) : void {
         $this->sendInternal($msg, -1);
     }
     
@@ -146,32 +146,38 @@ class TestingDriver implements IDriver {
             ]);
     }
 
-    public function sendToChat(Chat $chat, IMessage $msg) : void {
+    public function sendToChat(IChat $chat, IMessage $msg) : void {
         $this->sendInternal($msg, -1);
     }
     
     public function onSelected() : void {
-        set_error_handler([$this, "errorHandler"], E_ALL);
-        set_exception_handler([$this, "exceptionHandler"]);
+        // TODO: добавить условие, проверяющее значение из .env файла
+        //~ set_error_handler([$this, "errorHandler"], E_ALL);
+        //~ set_exception_handler([$this, "exceptionHandler"]);
+
+        $payload = file_get_contents('php://input');
+        if ($payload === '') {
+            // Нет данных, драйвер не будет обрабатывать запрос
+            throw new \Exception("No payload");
+        }
+        $this->post_body = json_decode($payload, true);
     }
 
-    public function onProcessStart(UserModel $user) : void {
-        $this->start_user_state = $user->getState();
-    }
+    public function onProcessStart() : void {}
 
     // Событие завершения обработки
-    public function onProcessEnd(UserModel $user) : void {
-        $end_state = $user->getState();
-        if ($this->start_user_state != $end_state) {
-            // Если вначале пользователь был в одном состоянии, а в конце
-            // в другом, уведомляем об этом
-            $this->addAction('info',
-                [
-                    "title" => "Состояние пользователя изменено",
-                    "body" => "Новое состояние: ".serialize($end_state)
-                ]
-            );
-        }
+    public function onProcessEnd() : void {
+        //~ $end_state = $user->getState();
+        //~ if ($this->start_user_state != $end_state) {
+            //~ // Если вначале пользователь был в одном состоянии, а в конце
+            //~ // в другом, уведомляем об этом
+            //~ $this->addAction('info',
+                //~ [
+                    //~ "title" => "Состояние пользователя изменено",
+                    //~ "body" => "Новое состояние: ".serialize($end_state)
+                //~ ]
+            //~ );
+        //~ }
         $this->echoActions();
     }
 
@@ -197,7 +203,6 @@ class TestingDriver implements IDriver {
 
     // Добавляет действие в буфер
     protected function addAction(string $command, array $details) : void {
-        $details['forUser'] = $this->post_body['details']['userId'];
         $this->actions[] = ['action' => $command, 'details' => $details];
     }
 

@@ -13,5 +13,10 @@
             "name": "Вадим Королёв",
             "email": "pydim@mail.ru"
         }
-    ]
+    ],
+    "autoload": {
+        "psr-4": {
+            "BotKit\\": "botkit/"
+        }
+    }
 }

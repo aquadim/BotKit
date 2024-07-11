@@ -15,12 +15,12 @@ class Database {
     private function __construct($dsn) {
         // Подключение к БД
         $dsnParser = new DsnParser();
-        $connection_params = $dsnParser->parse($_ENV['dsn']);
+        $connection_params = $dsnParser->parse($dsn);
         $this->connection = DriverManager::getConnection($connection_params);
 
         // Получение менеджера сущностей
         $config = ORMSetup::createAttributeMetadataConfiguration(
-            paths: array(root_dir . '/src/Entities'),
+            paths: array(root_dir . '/botkit/Entities'),
             isDevMode: true,
         );
         $this->entity_manager = new EntityManager($this->connection, $config);

@@ -5,9 +5,11 @@ namespace BotKit\Drivers;
 
 use BotKit\Models\User as UserModel;
 use BotKit\Models\Chats\IChat;
+use BotKit\Models\Chats\DirectChat;
 use BotKit\Models\Messages\IMessage;
 use BotKit\Models\Events\IEvent;
 use BotKit\Models\Events\TextMessageEvent;
+use BotKit\Entities\Platform;
 
 interface IDriver {
 
@@ -16,10 +18,8 @@ interface IDriver {
     public function forThis() : bool;
 
     // Возвращает событие на основании данных входящего HTTP запроса
-    public function getEvent() : IEvent;
-
-    // Возвращает объект пользователя, кто вызвал это событие
-    public function getUserModel(string $id_on_platform) : UserModel;
+    // $user_model - модель пользователя
+    public function getEvent(UserModel $user_model) : IEvent;
 
     // Отвечает на текстовое сообщение
     // Если empathise=true, сообщение должно быть явным ответом
@@ -31,7 +31,7 @@ interface IDriver {
         bool $empathise = true) : void;
 
     // Отсылает сообщение пользователю в личный чат между ботом и пользователем
-    public function sendMessage(UserModel $u, IMessage $msg) : void;
+    public function sendDirectMessage(UserModel $user, IMessage $msg) : void;
 
     // Изменяет сообщение
     // message_id - ID сообщения на платформе
@@ -45,10 +45,10 @@ interface IDriver {
     public function onSelected() : void;
     
     // Событие перед началом обработки запроса
-    public function onProcessStart(UserModel $user) : void;
+    public function onProcessStart() : void;
 
     // Событие завершения обработки
-    public function onProcessEnd(UserModel $user) : void;
+    public function onProcessEnd() : void;
 
     // Показывает содержимое переменной (для отладки)
     // $label - что именно за переменная
@@ -58,4 +58,12 @@ interface IDriver {
     // Возвращает домент платформы бота
     // Например: telegram.org, vk.com, whatsapp.com
     public function getPlatformDomain() : string;
+
+    // Возвращает id на платформе у пользователя, который вызвал текущий запрос.
+    public function getUserIdOnPlatform() : string;
+
+    // Возвращает ник на платформе у пользователя, который вызвал текущий запрос.
+    // Например @vadim_aqua, @pydim. Если ника нет, либо если платформа не
+    // поддерживает ников, следует вернуть id на платформе.
+    public function getUserName() : string;
 }

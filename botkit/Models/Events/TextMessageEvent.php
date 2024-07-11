@@ -4,6 +4,7 @@
 namespace BotKit\Models\Events;
 
 use BotKit\Models\User;
+use BotKit\Models\Chats\IChat;
 
 class TextMessageEvent implements IEvent {
 

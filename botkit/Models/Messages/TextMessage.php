@@ -21,7 +21,7 @@ class TextMessage implements IMessage {
 		protected string $text = '',
 		protected array $attachments = []) {} 
 
-	public function getIdOnPlatform() {
+	public function getIdOnPlatform() : string {
 		return $this->id_on_platform;
 	}
 

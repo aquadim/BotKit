@@ -2,3 +2,4 @@ vendor
 .env
 BotKit.geany
 composer.lock
+db.sqlite3
