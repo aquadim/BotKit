@@ -11,6 +11,7 @@ use BotKit\Models\Events\IEvent;
 use BotKit\Models\Events\UnknownEvent;
 use BotKit\Models\Events\TextMessageEvent;
 use BotKit\Database;
+use BotKit\Enums\State;
 
 use BotKit\Models\Messages\IMessage;
 
@@ -60,6 +61,23 @@ class TestingDriver implements IDriver {
                     $details['text'],
                     []
                 );
+
+            case 'statesRequest':
+                $all_states = array_combine(
+                    array_column(State::cases(), 'value'),
+                    array_column(State::cases(), 'name')
+                );
+                $details = [];
+                foreach ($all_states as $id => $name) {
+                    $details[] = ['id'=>$id, 'name'=>$name];
+                }
+                $this->addAction(
+                    "statesResponse",
+                    $details
+                );
+                // Дальнейшая обработка не требуется, завершаем выполнение здесь
+                $this->echoActions();
+            
             default:
                 return new UnknownEvent($user_model, $chat_of_msg);
         }
@@ -76,19 +94,6 @@ class TestingDriver implements IDriver {
                 //~ "action" => "info",
                 //~ "title" => "Состояние пользователя изменено вручную",
                 //~ "body" => "Новое состояние: ".serialize($user->getState())
-            //~ ];
-            //~ // Дальнейшая обработка не требуется, завершаем выполнение здесь
-            //~ $this->echoActions();
-        //~ }
-
-        //~ // Интерфейс тестов запрашивает все доступные состояния
-        //~ if ($data['type'] == 'statesRequest') {
-            //~ $this->actions[] = [
-                //~ "action" => "statesResponse",
-                //~ "states" => array_combine(
-                    //~ array_column(State::cases(), 'name'),
-                    //~ array_column(State::cases(), 'value')
-                //~ )
             //~ ];
             //~ // Дальнейшая обработка не требуется, завершаем выполнение здесь
             //~ $this->echoActions();

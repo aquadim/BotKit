@@ -7,6 +7,7 @@ use BotKit\Models\Events\IEvent;
 use BotKit\Drivers\IDriver;
 use BotKit\Entities\{User as UserEntity, Platform};
 use BotKit\Models\User as UserModel;
+use BotKit\Enums\State;
 
 class Bot {
 
@@ -60,6 +61,24 @@ class Bot {
             'id_on_platform'=> $user_platform_id
         ]);
         $user_entity = $query->getResult()[0];
+
+        if ($user_entity === null) {
+            // Нет пользователя, создаём
+            $platform_query = $em->createQuery('SELECT platform FROM '.
+            Platform::class .' platform WHERE platform.domain=:platformDomain');
+            $platform_query->setParameters([
+                'platformDomain' => $driver_platform
+            ]);
+            $platform = $platform_query->getResult()[0];
+            
+            $user_entity = new UserEntity();
+            $user_entity->setIdOnPlatform($user_platform_id);
+            $user_entity->setPlatform($platform);
+            $user_entity->setState(State::FirstInteraction);
+
+            $em->persist($user_entity);
+        }
+        
         $user_model = new UserModel($user_entity, $user_platform_id);
 
         // "- Я нашёл пользователя по тем данным, которые ты мне дал, можешь

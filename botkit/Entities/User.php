@@ -56,11 +56,6 @@ class User {
         $this->id_on_platform = $id_on_platform;
     }
 
-    // Устанавливает ID платформы
-    public function setPlatformId(int $platform_id) : void {
-        $this->platform_id = $platform_id;
-    }
-
     // Устанавливает платформу
     public function setPlatform(Platform $platform) : void {
         $this->platform_id = $platform->getId();
