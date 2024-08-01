@@ -26,7 +26,7 @@ class User {
 
     // Состояние пользователя
     #[ORM\Column(type: 'integer')]
-    private int $state = State::FirstInteraction->value;
+    private int $state;
 
     #region getters
     // Возвращает ID пользователя в БД

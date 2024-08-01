@@ -8,8 +8,8 @@ use BotKit\Entities;
 
 $em = Database::getEM();
 
-$test_platform = new Entities\Platform("example.com");
-$em->persist($test_platform);
+$vk_platform = new Entities\Platform("vk.com");
+$em->persist($vk_platform);
 
 $em->flush();
 echo "Старт базы данных проведён успешно!";

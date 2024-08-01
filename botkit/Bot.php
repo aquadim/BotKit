@@ -60,9 +60,9 @@ class Bot {
             'platformDomain' => $driver_platform,
             'id_on_platform'=> $user_platform_id
         ]);
-        $user_entity = $query->getResult()[0];
+        $result = $query->getResult();
 
-        if ($user_entity === null) {
+        if (count($result) === 0) {
             // Нет пользователя, создаём
             $platform_query = $em->createQuery('SELECT platform FROM '.
             Platform::class .' platform WHERE platform.domain=:platformDomain');
@@ -77,6 +77,8 @@ class Bot {
             $user_entity->setState(State::FirstInteraction);
 
             $em->persist($user_entity);
+        } else {
+            $user_entity = $result[0];
         }
         
         $user_model = new UserModel($user_entity, $user_platform_id);

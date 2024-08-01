@@ -7,9 +7,9 @@ use BotKit\Bot;
 
 // Загрузка драйверов. Этот код можно редактировать до строки
 // "Нельзя редактировать дальше"
-use BotKit\Drivers\TestingDriver;
+use BotKit\Drivers\VkComDriver;
 
-Bot::loadDriver(new TestingDriver());
+Bot::loadDriver(new VkComDriver());
 // Нельзя редактировать дальше
 
 Bot::onLoadingFinished();
