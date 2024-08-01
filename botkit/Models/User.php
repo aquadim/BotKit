@@ -11,7 +11,8 @@ use BotKit\Bot;
 class User {
 
     // Ленивая загрузка
-    private $lazy_username; // Ник на платформе
+    private $lazy_username; // Имя пользователя на платформе. Например: Вадим Королёв
+    private $lazy_nickname; // Ник пользователя на платформе. Например: aquadim
 
     public function __construct(
         protected UserEntity $entity_obj,
@@ -27,6 +28,13 @@ class User {
             $this->lazy_username = Bot::getCurrentDriver()->getUserName();
         }
         return $this->lazy_username;
+    }
+
+    public function getNickname() {
+        if (!isset($this->lazy_nickname)) {
+            $this->lazy_nickname = Bot::getCurrentDriver()->getNickName();
+        }
+        return $this->lazy_nickname;
     }
 
     public function getState() : State {

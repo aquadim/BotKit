@@ -8,11 +8,14 @@ use BotKit\Controller;
 class TestController extends Controller {
 
     public function sendEcho() {
-        $username = $this->u->getUsername();
+        $user_name = $this->u->getUsername();
+        $user_nick = $this->u->getNickname();
 
-        $this->replyDM('DM: '.$this->msg_text);
-        $this->reply('CHAT: '.$this->msg_text);
-        $this->replyDM("Your username is: @{$username}");
+        $this->replyDM('Личное сообщение: '.$this->msg_text);
+        $this->reply('Сообщение в чат: '.$this->msg_text);
+        
+        $info = "Ваше имя: $user_name\nВаш ник: @$user_nick";
+        $this->reply($info);
     }
     
 }

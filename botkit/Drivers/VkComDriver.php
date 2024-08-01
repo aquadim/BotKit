@@ -6,6 +6,7 @@ namespace BotKit\Drivers;
 use BotKit\Models\User as UserModel;
 use BotKit\Models\Chats\IChat;
 use BotKit\Models\Chats\DirectChat;
+use BotKit\Models\Chats\GroupChat;
 use BotKit\Models\Messages\TextMessage;
 use BotKit\Models\Events\IEvent;
 use BotKit\Models\Events\UnknownEvent;
@@ -20,6 +21,9 @@ class VkComDriver implements IDriver {
     // Домен
     private static string $domain = "vk.com";
     
+    // API версия
+    private string $api_version = "5.199";
+    
     // Это запрос подтверждения сервера?
     private bool $request_is_confirmation;
 
@@ -27,7 +31,9 @@ class VkComDriver implements IDriver {
     private array $post_body;
     
     // Выполняет метод API
-    private function execApiMethod(string $method, array $fields) : array {
+    public function execApiMethod(string $method, array $fields) : array {
+        $fields["v"] = $this->api_version;
+        $fields["access_token"] = $_ENV["vkcom_apikey"];
         $post_fields = http_build_query($fields);
         
         $ch = curl_init();
@@ -38,7 +44,7 @@ class VkComDriver implements IDriver {
         $output = curl_exec($ch);
         curl_close($ch);
         
-        return json_decode($output, true)["response"];
+        return json_decode($output, true);
     }
 
     #region IDriver
@@ -63,7 +69,7 @@ class VkComDriver implements IDriver {
             case "message_new":
             case "message_edit":
             case "message_typing_state":
-                return $this->post_body["object"]["from_id"];
+                return $this->post_body["object"]["message"]["from_id"];
             
             case "message_allow":
             case "message_deny":
@@ -82,8 +88,17 @@ class VkComDriver implements IDriver {
         $user = $this->execApiMethod(
             "users.get",
             ["user_ids" => $this->getUserIdOnPlatform()]
-        )[0];
+        )["response"][0];
         return $user["first_name"] . " " . $user["last_name"];
+    }
+    
+    public function getNickName() : string {
+        $user = $this->execApiMethod("users.get",
+        [
+            "user_ids" => $this->getUserIdOnPlatform(),
+            "fields" => "domain"
+        ])["response"][0];
+        return $user["domain"];
     }
 
     public function getEvent(UserModel $user_model) : IEvent {
@@ -95,10 +110,8 @@ class VkComDriver implements IDriver {
         $object = $this->post_body["object"];
         $chat_with_user = new DirectChat($this->getUserIdOnPlatform());
         
-        // Если существует в объекте chat_id, то сообщение написано в
-        // групповом чате
-        if (isset($object["chat_id"])) {
-            $chat_of_msg = new GroupChat($object["chat_id"]);
+        if ($object["message"]["peer_id"] > 2000000000) {
+            $chat_of_msg = new GroupChat($object["message"]["peer_id"]);
         } else {
             $chat_of_msg = $chat_with_user;
         }
@@ -122,10 +135,10 @@ class VkComDriver implements IDriver {
         switch ($type) {
             case "message_new":
                 return new TextMessageEvent(
-                    $object["id"],
+                    $object["message"]["id"],
                     $user_model,
                     $chat_of_msg,
-                    $object["text"],
+                    $object["message"]["text"],
                     []
                 );
             
@@ -148,20 +161,25 @@ class VkComDriver implements IDriver {
     }
 
     public function sendDirectMessage(UserModel $user, IMessage $msg) : void {
-        $this->sendInternal($msg, -1);
+        $this->execApiMethod("messages.send",
+        [
+            "user_id" => $user->getIdOnPlatform(),
+            "random_id" => 0,
+            "message" => $msg->getText()
+        ]);
     }
     
     public function editMessage($message_id, IMessage $msg) : void {
-        $this->addAction(
-            'editMessage',
-            [
-                'msgId'=>$message_id,
-                'newMessage'=>$this->getMessageData($msg, -1)
-            ]);
+        // TODO
     }
 
     public function sendToChat(IChat $chat, IMessage $msg) : void {
-        $this->sendInternal($msg, -1);
+        $this->execApiMethod("messages.send",
+        [
+            "peer_id" => $chat->getIdOnPlatform(),
+            "random_id" => 0,
+            "message" => $msg->getText()
+        ]);
     }
     
     public function onSelected() : void {
@@ -181,16 +199,16 @@ class VkComDriver implements IDriver {
         ob_start();
         var_dump($variable);
         $info = ob_get_clean();
-        $this->addAction("varDump",
-            [
-                "title" => $title,
-                "info" => $info 
-            ]
-        );
+        $this->execApiMethod("messages.send",
+        [
+            "peer_id" => $this->getUserIdOnPlatform(),
+            "random_id" => 0,
+            "message" => "Contents for " . $label . ":\n".$info
+        ]);
     }
 
     public function getPlatformDomain() : string {
-        return 'vk.com';
+        return self::$domain;
     }
     #endregion
 }
