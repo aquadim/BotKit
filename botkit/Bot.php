@@ -8,6 +8,7 @@ use BotKit\Drivers\IDriver;
 use BotKit\Entities\{User as UserEntity, Platform};
 use BotKit\Models\User as UserModel;
 use BotKit\Enums\State;
+use BotKit\Models\Events\TextMessageEvent;
 
 class Bot {
 
@@ -77,6 +78,7 @@ class Bot {
             $user_entity->setState(State::FirstInteraction);
 
             $em->persist($user_entity);
+            
         } else {
             $user_entity = $result[0];
         }
@@ -161,8 +163,8 @@ class Bot {
 
     // Подключает обработчик команды
     // Команда должна быть только текстовым сообщением
-    public function onCommand(string $template, callable $callback) {
-        if (!is_a(self::$event, PlainMessageEvent::class, true)) {
+    public static function onCommand(string $template, string $callback) {
+        if (!is_a(self::$event, TextMessageEvent::class, true)) {
             // Не текстовое сообщение
             return;
         }
@@ -180,11 +182,7 @@ class Bot {
             return;
 		};
 
-        // Оставляем только строковые ключи, т.к. в processRequest
-        // $named_groups будут соединены со стандартными параметрами, которые
-        // передаются только по названиям, не по позициям. Если в $named_groups
-        // попадётся числовой ключ, позиционный аргумент передастся после
-        // ключевого, что приведёт к ошибке
+        // Оставляем только строковые ключи
         $named_groups_filter = array_filter(
             $named_groups,
             function ($k) {
@@ -195,6 +193,33 @@ class Bot {
 
         // Вызов обработки с пойманными параметрами
         self::processRequest($callback, $named_groups_filter);
+    }
+
+    // Подключает обработчик текстового события
+    // text - текст сообщения должен быть таковым
+    // callback - метод контроллера
+    // required_state - в каком состоянии должен быть пользователь
+    // should_be_from_group_chat - должно ли быть событие от группового чата?
+    public static function onText(
+        string $text,
+        string $callback,
+        State $required_state = State::Any,
+        bool $should_be_from_group_chat = false
+    )
+    {
+        if ($required_state != State::Any && self::$event->getUser()->getState() != $required_state) {
+            return;
+        }
+        
+        if (is_a(self::$event->getChat(), GroupChat::class, true) == $should_be_from_group_chat) {
+            return;
+        }
+        
+        if (self::$event->getText() !== $text) {
+            return;
+        }
+        
+        self::processRequest($callback, []);
     }
 
     // Подключает обработчик обратного вызова
@@ -223,7 +248,7 @@ class Bot {
     }
 
     // Все условия не прошли, вызываем план Б
-    public function fallback(callable $callback) {
+    public static function fallback(string $callback) {
         self::processRequest($callback, []);
     }
 

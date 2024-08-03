@@ -4,6 +4,7 @@
 use BotKit\Bot;
 use BotKit\Models\Events\IEvent;
 use BotKit\Models\Events\TextMessageEvent;
-use BotKit\Controllers\TestController;
+use BotKit\Enums\State;
 
-Bot::onEvent(TextMessageEvent::class, 'TestController@sendEcho');
+Bot::onCommand("/setstate {state_id}", 'TestController@setState');
+Bot::onCommand("/info {id}", 'TestController@info');

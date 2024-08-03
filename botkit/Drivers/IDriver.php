@@ -63,10 +63,14 @@ interface IDriver {
     public function getUserIdOnPlatform() : string;
 
     // Возвращает имя и фамилию на платформе у пользователя, который вызвал текущий запрос.
-    public function getUserName() : string;
+    // id - id пользователя на платформе. Если null, следует использовать
+    // id текущего пользователя
+    public function getUserName($id = null) : string;
     
     // Возвращает ник на платформе у пользователя, который вызвал текущий запрос.
     // Например @vadim_aqua, @pydim. Если ника нет, либо если платформа не
     // поддерживает ников, следует вернуть id на платформе.
-    public function getNickName() : string;
+    // id - id пользователя на платформе. Если null, следует использовать
+    // id текущего пользователя
+    public function getNickName($id = null) : string;
 }

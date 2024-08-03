@@ -40,4 +40,8 @@ class User {
     public function getState() : State {
         return $this->entity_obj->getState();
     }
+    
+    public function setState(State $state) : void {
+        $this->entity_obj->setState($state);
+    }
 }

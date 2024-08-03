@@ -17,7 +17,7 @@ class User {
 
     // Платформа мессенджера
     #[ORM\ManyToOne(Platform::class)]
-    #[ORM\JoinColumn(nullable: true)]
+    #[ORM\JoinColumn(nullable: false)]
     private Platform $platform;
 
     // ID на платформе
@@ -58,7 +58,7 @@ class User {
 
     // Устанавливает платформу
     public function setPlatform(Platform $platform) : void {
-        $this->platform_id = $platform->getId();
+        $this->platform = $platform;
     }
 
     // Устанавливает состояние через перечисление

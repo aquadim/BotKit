@@ -84,18 +84,18 @@ class VkComDriver implements IDriver {
         }
     }
     
-    public function getUserName() : string {
+    public function getUserName($id = null) : string {
         $user = $this->execApiMethod(
             "users.get",
-            ["user_ids" => $this->getUserIdOnPlatform()]
+            ["user_ids" => $id ? $id : $this->getUserIdOnPlatform()]
         )["response"][0];
         return $user["first_name"] . " " . $user["last_name"];
     }
     
-    public function getNickName() : string {
+    public function getNickName($id = null) : string {
         $user = $this->execApiMethod("users.get",
         [
-            "user_ids" => $this->getUserIdOnPlatform(),
+            "user_ids" => $id ? $id : $this->getUserIdOnPlatform(),
             "fields" => "domain"
         ])["response"][0];
         return $user["domain"];
