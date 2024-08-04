@@ -17,7 +17,7 @@ class TestController extends Controller {
         "Имя: $user_name\n".
         "Ник: $user_nick";
         
-        $this->reply($message);
+        $this->replyText($message);
     }
     
     // Устанавливает состояние
@@ -29,26 +29,10 @@ class TestController extends Controller {
         }
         
         $this->u->setState($new_state);
-        $this->reply("Установлено состояние ".$new_state->name);
-    }
-    
-    public function test1() {
-        $this->reply("test1: ok");
-    }
-    
-    public function test2() {
-        $this->reply("test2: ok");
-    }
-    
-    public function test3() {
-        $this->reply("test3: ok");
-    }
-    
-    public function test4() {
-        $this->reply("test4: ok");
+        $this->replyText("Установлено состояние ".$new_state->name);
     }
     
     public function fallback() {
-        $this->reply("Fallback");
+        $this->replyText("Fallback");
     }
 }

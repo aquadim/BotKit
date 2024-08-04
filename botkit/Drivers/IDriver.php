@@ -34,9 +34,9 @@ interface IDriver {
     public function sendDirectMessage(UserModel $user, IMessage $msg) : void;
 
     // Изменяет сообщение
-    // message_id - ID сообщения на платформе
-    // msg - новые данные сообщения
-    public function editMessage($message_id, IMessage $msg) : void;
+    // old - старое сообщение
+    // new - новое сообщение
+    public function editMessage(IMessage $old, IMessage $new) : void;
 
     // Отправляет сообщение в чат
     public function sendToChat(IChat $chat, IMessage $msg) : void;

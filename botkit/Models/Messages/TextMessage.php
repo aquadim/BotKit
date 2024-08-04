@@ -1,62 +1,64 @@
 <?php
-// Класс сообщения
+// Класс исходящего сообщения
 
 namespace BotKit\Models\Messages;
+use BotKit\Models\Attachments\PhotoAttachment;
+use BotKit\Models\Chats\IChat;
 
 class TextMessage implements IMessage {
 
 	// ID сообщения
-	protected string $id_on_platform;
+	protected string $id;
+	
+	// Текст сообщения
+	protected string $text;
+	
+	// Вложения: изображения в сообщении
+	protected array $photos;
+	
+	// Чат, в который было отправлено сообщение
+	protected IChat $chat;
 
-	// Клавиатура сообщения (если присутствует)
-	protected KeyboardAttachment $keyboard;
+	public function __construct($text, $photos) {
+		$this->text = $text;
+		$this->photos = $photos;
+	}
 
-	// Имеет ли сообщение изображения
-	private bool $has_images = false;
+	// Создаёт сообщение с текстом $text
+	public static function create(string $text) : TextMessage {
+		return new TextMessage($text, []);
+	}
+	
+	// Устанавливает id сообщения
+	public function setId(string $id) : void {
+		$this->id = $id;
+	}
 
-	// Имеет ли сообщение клавиатуру
-	private bool $has_keyboard = false;
-
-	public function __construct(
-		protected string $text = '',
-		protected array $attachments = []) {} 
-
-	public function getIdOnPlatform() : string {
-		return $this->id_on_platform;
+	// Возвращает id сообщения
+	public function getId() : string {
+		return $this->id;
 	}
 
 	// Возвращает текст сообщения
 	public function getText() : string {
 		return $this->text;
 	}
-
-	public function getAttachments() : array {
-		return $this->attachments;
-	}
-
-	public function addAttachment(IAttachment $attachment) : void {
-		if (is_a($attachment, KeyboardAttachment::class)) {
-			// Используем метод addKeyboard если вложение - клавиатура
-			$this->addKeyboard($attachment);
-			return;
-		}
-
-		$this->attachments[] = $attachment;
-	}
-
-	// Добавляет клавиатуру к сообщению
-	public function addKeyboard(KeyboardAttachment $keyboard) : void {
-		if ($this->has_keyboard == true) {
-			throw new Error("keyboard already set");
-		}
-		$this->has_keyboard = true;
-		$this->keyboard = $keyboard;
-		$this->attachments[] = $attachment;
+	
+	// Возвращает фото
+	public function getPhotos() : array {
+		return $this->photos;
 	}
 
 	// Добавляет вложение
-	public function addImage(ImageAttachment $image) : void {
-		$this->has_images = true;
-		$this->attachments[] = $image;
+	public function addPhoto(PhotoAttachment $photo) : void {
+		$this->photos[] = $photo;
+	}
+	
+	public function setChat(IChat $chat) : void {
+		$this->chat = $chat;
+	}
+	
+	public function getChat() : IChat {
+		return $this->chat;
 	}
 }

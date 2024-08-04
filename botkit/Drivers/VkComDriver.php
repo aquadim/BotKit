@@ -13,8 +13,8 @@ use BotKit\Models\Events\UnknownEvent;
 use BotKit\Models\Events\TextMessageEvent;
 use BotKit\Database;
 use BotKit\Enums\State;
-
 use BotKit\Models\Messages\IMessage;
+use BotKit\Enums\PhotoAttachmentType;
 
 class VkComDriver implements IDriver {
 
@@ -29,6 +29,9 @@ class VkComDriver implements IDriver {
 
     // JSON данные полученного POST запроса
     private array $post_body;
+    
+    // URL загрузки изображений
+    protected string $uploadurl_photo;
     
     // Выполняет метод API
     public function execApiMethod(string $method, array $fields) : array {
@@ -169,17 +172,36 @@ class VkComDriver implements IDriver {
         ]);
     }
     
-    public function editMessage($message_id, IMessage $msg) : void {
-        // TODO
+    public function editMessage(IMessage $old, IMessage $new) : void {
+        $attachment_strings = $this->getAttachmentStrings($new->getPhotos());
+        
+        // Выполнение метода API
+        $this->execApiMethod("messages.edit",
+        [
+            "peer_id" => $old->getChat()->getIdOnPlatform(),
+            "random_id" => 0,
+            "message" => $new->getText(),
+            "attachment" => implode(",", $attachment_strings),
+            "message_id" => $old->getId()
+        ]);
+        
+        // Присваиваем новому сообщению старый ID
+        $new->setId($old->getId());
     }
 
     public function sendToChat(IChat $chat, IMessage $msg) : void {
-        $this->execApiMethod("messages.send",
+        $attachment_strings = $this->getAttachmentStrings($msg->getPhotos());
+        
+        // Выполнение метода отправки
+        $response = $this->execApiMethod("messages.send",
         [
             "peer_id" => $chat->getIdOnPlatform(),
             "random_id" => 0,
-            "message" => $msg->getText()
+            "message" => $msg->getText(),
+            "attachment" => implode(",", $attachment_strings)
         ]);
+        $msg->setId(strval($response["response"]));
+        $msg->setChat($chat);
     }
     
     public function onSelected() : void {
@@ -211,4 +233,76 @@ class VkComDriver implements IDriver {
         return self::$domain;
     }
     #endregion
+    
+    protected function getUploadURLPhoto() : string {
+        if (isset($this->uploadurl_photo)) {
+            return $this->uploadurl_photo;
+        }
+        
+        $response = $this->execApiMethod("photos.getMessagesUploadServer",
+        [
+            "public_id" => $_ENV["vkcom_public_id"]
+        ]);
+        $this->uploadurl_photo = $response["response"]["upload_url"];
+        return $this->uploadurl_photo;
+    }
+    
+    // Загружает изображение с диска. Возвращает строку, которую можно
+    // использовать как $attachment
+    protected function uploadImage($filename) : string {
+        // Получение URL для загрузки фото
+        $upload_url = $this->getUploadURLPhoto();
+        
+        $image = new \CURLFile($filename, 'image/jpeg');
+        
+        // Передача файла
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $upload_url);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, ['file1' => $image]);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        $response_afterupload = curl_exec($ch);
+    
+        $data_afterupload = json_decode($response_afterupload, true);
+        
+        $response = $this->execApiMethod("photos.saveMessagesPhoto",
+        [
+            'photo'=>$data_afterupload['photo'],
+            'server'=>$data_afterupload['server'],
+            'hash'=>$data_afterupload['hash'],
+        ]);
+        
+        return 
+            "photo".
+            $response['response'][0]['owner_id'].
+            '_'.
+            $response['response'][0]['id'];
+    }
+    
+    protected function getAttachmentStrings($photos) : array {
+        $attachment_strings = [];
+        
+        // photo
+        foreach ($photos as $photo) {
+            switch ($photo->getType()) {
+                case PhotoAttachmentType::FromFile:
+                    $attachment = $this->uploadImage($photo->getValue());
+                    $attachment_strings[] = $attachment;
+                    $photo->setId($attachment);
+                    break;
+                
+                case PhotoAttachmentType::FromURL:
+                    break;
+                
+                case PhotoAttachmentType::FromUploaded:
+                    $attachment_strings[] = $photo->getValue();
+                    break;
+                
+                default:
+                    break;
+            }
+        }
+        
+        return $attachment_strings;
+    }
 }
