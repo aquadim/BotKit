@@ -292,6 +292,15 @@ class VkComDriver implements IDriver {
                     break;
                 
                 case PhotoAttachmentType::FromURL:
+                    // Скачиваем и сохраняем
+                    $image_data = file_get_contents($photo->getValue());
+                    $filename = tempnam("/tmp", "botkit").'.jpeg';
+                    file_put_contents($filename, $image_data);
+                    
+                    // Загружаем как в FromFile
+                    $attachment = $this->uploadImage($filename);
+                    $attachment_strings[] = $attachment;
+                    $photo->setId($attachment);
                     break;
                 
                 case PhotoAttachmentType::FromUploaded:
