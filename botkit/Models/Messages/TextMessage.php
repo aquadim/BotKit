@@ -2,8 +2,10 @@
 // Класс исходящего сообщения
 
 namespace BotKit\Models\Messages;
+
 use BotKit\Models\Attachments\PhotoAttachment;
 use BotKit\Models\Chats\IChat;
+use BotKit\Models\Keyboards\IKeyboard;
 
 class TextMessage implements IMessage {
 
@@ -15,6 +17,9 @@ class TextMessage implements IMessage {
 	
 	// Вложения: изображения в сообщении
 	protected array $photos;
+	
+	// Клавиатура
+	protected IKeyboard $keyboard;
 	
 	// Чат, в который было отправлено сообщение
 	protected IChat $chat;
@@ -29,29 +34,36 @@ class TextMessage implements IMessage {
 		return new TextMessage($text, []);
 	}
 	
-	// Устанавливает id сообщения
 	public function setId(string $id) : void {
 		$this->id = $id;
 	}
 
-	// Возвращает id сообщения
 	public function getId() : string {
 		return $this->id;
 	}
+	
+	public function setText(string $text) : void {
+		$this->text = $text;
+	}
 
-	// Возвращает текст сообщения
 	public function getText() : string {
 		return $this->text;
 	}
 	
-	// Возвращает фото
 	public function getPhotos() : array {
 		return $this->photos;
 	}
 
-	// Добавляет вложение
 	public function addPhoto(PhotoAttachment $photo) : void {
 		$this->photos[] = $photo;
+	}
+	
+	public function setKeyboard(IKeyboard $keyboard) : void {
+		$this->keyboard = $keyboard;
+	}
+	
+	public function getKeyboard() : IKeyboard {
+		return $this->keyboard;
 	}
 	
 	public function setChat(IChat $chat) : void {

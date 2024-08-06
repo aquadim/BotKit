@@ -9,4 +9,7 @@ use BotKit\Enums\State;
 Bot::onCommand("/setstate {state_id}", 'TestController@setState');
 Bot::onCommand("/info {id}", 'TestController@info');
 
-Bot::onCommand("/thispersondoesnotexist", "ImageController@thispersondoesnotexist");
+Bot::onCommand("/thispersondoesnotexist {count}", "ImageController@thispersondoesnotexist");
+Bot::onCommand("/gravatar {email} {size}", "ImageController@gravatar");
+
+Bot::onCommand("/keyboard", "KeyboardController@getTestKeyboard");

@@ -4,17 +4,27 @@
 namespace BotKit\Drivers;
 
 use BotKit\Models\User as UserModel;
+use BotKit\Database;
+
+use BotKit\Enums\PhotoAttachmentType;
+use BotKit\Enums\State;
+use BotKit\Enums\ButtonColor;
+
 use BotKit\Models\Chats\IChat;
 use BotKit\Models\Chats\DirectChat;
 use BotKit\Models\Chats\GroupChat;
+
+use BotKit\Models\Messages\IMessage;
 use BotKit\Models\Messages\TextMessage;
+
 use BotKit\Models\Events\IEvent;
 use BotKit\Models\Events\UnknownEvent;
 use BotKit\Models\Events\TextMessageEvent;
-use BotKit\Database;
-use BotKit\Enums\State;
-use BotKit\Models\Messages\IMessage;
-use BotKit\Enums\PhotoAttachmentType;
+
+use BotKit\Models\Keyboards\IKeyboard;
+use BotKit\Models\Keyboards\TextKeyboard;
+
+use BotKit\Models\KeyboardButtons\TextKeyboardButton;
 
 class VkComDriver implements IDriver {
 
@@ -191,6 +201,7 @@ class VkComDriver implements IDriver {
 
     public function sendToChat(IChat $chat, IMessage $msg) : void {
         $attachment_strings = $this->getAttachmentStrings($msg->getPhotos());
+        $keyboard = self::getKeyboardMarkup($msg->getKeyboard());
         
         // Выполнение метода отправки
         $response = $this->execApiMethod("messages.send",
@@ -198,7 +209,8 @@ class VkComDriver implements IDriver {
             "peer_id" => $chat->getIdOnPlatform(),
             "random_id" => 0,
             "message" => $msg->getText(),
-            "attachment" => implode(",", $attachment_strings)
+            "attachment" => implode(",", $attachment_strings),
+            "keyboard" => $keyboard
         ]);
         $msg->setId(strval($response["response"]));
         $msg->setChat($chat);
@@ -231,6 +243,66 @@ class VkComDriver implements IDriver {
 
     public function getPlatformDomain() : string {
         return self::$domain;
+    }
+    
+    public static function getKeyboardMarkup(IKeyboard $keyboard) : string {
+        $object = [];
+        
+        $object["one_time"] = $keyboard->isOneTime();
+        
+        if (is_a($keyboard, TextKeyboard::class)) {
+            $object["inline"] = false;
+        } else {
+            $object["inline"] = true;
+        }
+        
+        $layout = $keyboard->getLayout();
+        $buttons = [];
+        foreach ($layout as $row) {
+            $buttons_row = [];
+            
+            foreach ($row as $button) {
+                
+                if (is_a($button, TextKeyboardButton::class)) {
+                    // Это обычная текстовая кнопка
+                    $button_action = [
+                        "type" => "text",
+                        "label" => $button->getText(),
+                        "payload" => json_encode($button->getValue())
+                    ];
+                } else {
+                    // error?
+                }
+                
+                switch ($button->getColor()) {
+                    case ButtonColor::Primary:
+                        $button_color = "primary";
+                        break;
+                    case ButtonColor::Secondary:
+                        $button_color = "secondary";
+                        break;
+                    case ButtonColor::Positive:
+                        $button_color = "positive";
+                        break;
+                    case ButtonColor::Negative:
+                        $button_color = "negative";
+                        break;
+                    default:
+                        $button_color = "primary";
+                        break;
+                }
+                
+                $buttons_row[] = [
+                    "action" => $button_action,
+                    "color" => $button_color
+                ];
+            }
+            
+            $buttons[] = $buttons_row;
+        }
+        $object["buttons"] = $buttons;
+        
+        return json_encode($object);
     }
     #endregion
     

@@ -10,6 +10,7 @@ use BotKit\Models\Messages\IMessage;
 use BotKit\Models\Events\IEvent;
 use BotKit\Models\Events\TextMessageEvent;
 use BotKit\Entities\Platform;
+use BotKit\Models\Keyboards\IKeyboard;
 
 interface IDriver {
 
@@ -73,4 +74,7 @@ interface IDriver {
     // id - id пользователя на платформе. Если null, следует использовать
     // id текущего пользователя
     public function getNickName($id = null) : string;
+    
+    // Возвращает разметку клавиатуры. Обычно в формате JSON или XML
+    public static function getKeyboardMarkup(IKeyboard $keyboard) : string;
 }
