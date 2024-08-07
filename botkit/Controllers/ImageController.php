@@ -38,4 +38,19 @@ class ImageController extends Controller {
         
         $this->edit($wait_message, $final);
     }
+    
+    public function ytPreview($yt_id) {
+        // wait section
+        $wait_message = M::create("Изображения скачиваеюся...");
+        $this->reply($wait_message);
+        
+        // general section
+        $m = M::create("Кадры из видео: ");
+        for ($i = 1; $i < 4; $i++) {
+            $m->addPhoto(PhotoAttachment::fromURL(
+                "https://img.youtube.com/vi/".$yt_id."/mq".$i.".jpg"
+            ));
+        }
+        $this->reply($m);
+    }
 }

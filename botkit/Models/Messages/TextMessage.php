@@ -19,7 +19,7 @@ class TextMessage implements IMessage {
 	protected array $photos;
 	
 	// Клавиатура
-	protected IKeyboard $keyboard;
+	protected ?IKeyboard $keyboard;
 	
 	// Чат, в который было отправлено сообщение
 	protected IChat $chat;
@@ -27,6 +27,7 @@ class TextMessage implements IMessage {
 	public function __construct($text, $photos) {
 		$this->text = $text;
 		$this->photos = $photos;
+		$this->keyboard = null;
 	}
 
 	// Создаёт сообщение с текстом $text
@@ -62,7 +63,7 @@ class TextMessage implements IMessage {
 		$this->keyboard = $keyboard;
 	}
 	
-	public function getKeyboard() : IKeyboard {
+	public function getKeyboard() : ?IKeyboard {
 		return $this->keyboard;
 	}
 	

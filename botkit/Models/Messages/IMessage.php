@@ -36,5 +36,5 @@ interface IMessage {
     public function setKeyboard(IKeyboard $keyboard) : void;
     
     // Возвращает клавиатуру
-    public function getKeyboard() : IKeyboard;
+    public function getKeyboard() : ?IKeyboard;
 }

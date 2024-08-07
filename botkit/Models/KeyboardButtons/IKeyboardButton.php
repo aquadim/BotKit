@@ -12,11 +12,11 @@ interface IKeyboardButton {
     // Возвращает текст, отображаемый на кнопке
     public function getText() : string;
 
-    // Устанавливает доп. значение кнопки в формате ключ-значение
-    public function setValue(array $value) : void;
+    // Устанавливает доп. значение кнопки
+    public function setValue($value) : void;
     
     // Возвращает доп. значение кнопки
-    public function getValue() : array;
+    public function getValue();
     
     // Устанавливает цвет
     public function setColor(ButtonColor $color) : void;

@@ -40,12 +40,12 @@ class TextKeyboardButton implements IKeyboardButton {
     }
 
     // Устанавливает значение клавиатуры
-    public function setValue(array $value) : void {
+    public function setValue($value) : void {
         $this->payload = $value;
     }
     
     // Возвращает значение клавиатуры
-    public function getValue() : array {
+    public function getValue() {
         return $this->payload;
     }
     

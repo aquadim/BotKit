@@ -12,6 +12,17 @@ class UrlKeyboardButton implements IKeyboardButton {
     
     protected ButtonColor $color;
     
+    public function __construct(
+        string $text,
+        ButtonColor $color = ButtonColor::Primary,
+        string $url
+    )
+    {
+        $this->text = $text;
+        $this->color = $color;
+        $this->url = $url;
+    }
+    
     public function setText(string $text) : void {
         $this->text = $text;
     }
@@ -20,11 +31,11 @@ class UrlKeyboardButton implements IKeyboardButton {
         return $this->text;
     }
 
-    public function setValue(string $value) : void {
+    public function setValue($value) : void {
         $this->url = $value;
     }
     
-    public function getValue() : string {
+    public function getValue() {
         return $this->url;
     }
     

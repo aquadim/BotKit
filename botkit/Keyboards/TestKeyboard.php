@@ -15,12 +15,12 @@ class TestKeyboard extends TextKeyboard {
     public function __construct() {
         $this->layout = [
             [
-                new TextKeyboardButton("A"),
-                new TextKeyboardButton("B")
+                new TextKeyboardButton("A", ButtonColor::Primary),
+                new TextKeyboardButton("B", ButtonColor::Secondary)
             ],
             [
-                new TextKeyboardButton("C"),
-                new TextKeyboardButton("D")
+                new TextKeyboardButton("C", ButtonColor::Negative),
+                new TextKeyboardButton("D", ButtonColor::Positive)
             ]
         ];
     }

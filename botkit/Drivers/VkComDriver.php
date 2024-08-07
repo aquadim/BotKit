@@ -23,8 +23,10 @@ use BotKit\Models\Events\TextMessageEvent;
 
 use BotKit\Models\Keyboards\IKeyboard;
 use BotKit\Models\Keyboards\TextKeyboard;
+use BotKit\Models\Keyboards\InlineKeyboard;
 
 use BotKit\Models\KeyboardButtons\TextKeyboardButton;
+use BotKit\Models\KeyboardButtons\UrlKeyboardButton;
 
 class VkComDriver implements IDriver {
 
@@ -201,7 +203,13 @@ class VkComDriver implements IDriver {
 
     public function sendToChat(IChat $chat, IMessage $msg) : void {
         $attachment_strings = $this->getAttachmentStrings($msg->getPhotos());
-        $keyboard = self::getKeyboardMarkup($msg->getKeyboard());
+        
+        $kb_obj = $msg->getKeyboard();
+        if ($kb_obj != null) {
+            $keyboard_markup = self::getKeyboardMarkup($kb_obj);
+        } else {
+            $keyboard_markup = "";
+        }
         
         // Выполнение метода отправки
         $response = $this->execApiMethod("messages.send",
@@ -210,8 +218,11 @@ class VkComDriver implements IDriver {
             "random_id" => 0,
             "message" => $msg->getText(),
             "attachment" => implode(",", $attachment_strings),
-            "keyboard" => $keyboard
+            "keyboard" => $keyboard_markup
         ]);
+        
+        // $this->showContent("vk api response", $response);
+        
         $msg->setId(strval($response["response"]));
         $msg->setChat($chat);
     }
@@ -246,14 +257,22 @@ class VkComDriver implements IDriver {
     }
     
     public static function getKeyboardMarkup(IKeyboard $keyboard) : string {
+        // TODO:
+        // URL кнопок в строке может быть максимум две, обработать
+        
+        if (is_a($keyboard, ClearKeyboard::class)) {
+            // Очищающая клавиатура
+            return "{\"buttons\":[]}";
+        }
+        
         $object = [];
         
         $object["one_time"] = $keyboard->isOneTime();
         
-        if (is_a($keyboard, TextKeyboard::class)) {
-            $object["inline"] = false;
-        } else {
+        if (is_a($keyboard, InlineKeyboard::class)) {
             $object["inline"] = true;
+        } else {
+            $object["inline"] = false;
         }
         
         $layout = $keyboard->getLayout();
@@ -263,6 +282,9 @@ class VkComDriver implements IDriver {
             
             foreach ($row as $button) {
                 
+                $can_set_color = true;
+                $button_obj = [];
+                
                 if (is_a($button, TextKeyboardButton::class)) {
                     // Это обычная текстовая кнопка
                     $button_action = [
@@ -270,32 +292,38 @@ class VkComDriver implements IDriver {
                         "label" => $button->getText(),
                         "payload" => json_encode($button->getValue())
                     ];
-                } else {
-                    // error?
+                } else if (is_a($button, UrlKeyboardButton::class)) {
+                    $button_action = [
+                        "type" => "open_link",
+                        "link" => $button->getValue(),
+                        "label" => $button->getText()
+                    ];
+                    $can_set_color = false;
+                }
+                $button_obj["action"] = $button_action;
+                
+                if ($can_set_color) {
+                    switch ($button->getColor()) {
+                        case ButtonColor::Primary:
+                            $button_color = "primary";
+                            break;
+                        case ButtonColor::Secondary:
+                            $button_color = "secondary";
+                            break;
+                        case ButtonColor::Positive:
+                            $button_color = "positive";
+                            break;
+                        case ButtonColor::Negative:
+                            $button_color = "negative";
+                            break;
+                        default:
+                            $button_color = "primary";
+                            break;
+                    }
+                    $button_obj["color"] = $button_color;
                 }
                 
-                switch ($button->getColor()) {
-                    case ButtonColor::Primary:
-                        $button_color = "primary";
-                        break;
-                    case ButtonColor::Secondary:
-                        $button_color = "secondary";
-                        break;
-                    case ButtonColor::Positive:
-                        $button_color = "positive";
-                        break;
-                    case ButtonColor::Negative:
-                        $button_color = "negative";
-                        break;
-                    default:
-                        $button_color = "primary";
-                        break;
-                }
-                
-                $buttons_row[] = [
-                    "action" => $button_action,
-                    "color" => $button_color
-                ];
+                $buttons_row[] = $button_obj;
             }
             
             $buttons[] = $buttons_row;
