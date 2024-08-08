@@ -12,6 +12,7 @@ use BotKit\Models\Keyboards\ClearKeyboard;
 use BotKit\Keyboards\YTThumbnailKeyboardInline;
 use BotKit\Keyboards\YTThumbnailKeyboard;
 use BotKit\Keyboards\TestKeyboard;
+use BotKit\Keyboards\TestKeyboardInline;
 
 class KeyboardController extends Controller {
     
@@ -22,9 +23,15 @@ class KeyboardController extends Controller {
     }
 
     public function getTestKeyboard() {
-        $message = M::create("Вот клавиатура");
-        $message->setKeyboard(new TestKeyboard());
-        $this->reply($message);
+        $m = M::create("Вот клавиатура");
+        $m->setKeyboard(new TestKeyboard());
+        $this->reply($m);
+    }
+    
+    public function getTestKeyboardInline($yt_id) {
+        $m = M::create("Вот клавиатура");
+        $m->setKeyboard(new TestKeyboardInline($yt_id));
+        $this->reply($m);
     }
     
     public function getYTThumbnailLink($yt_id) {

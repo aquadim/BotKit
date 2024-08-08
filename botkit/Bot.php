@@ -3,12 +3,16 @@
 
 namespace BotKit;
 
-use BotKit\Models\Events\IEvent;
 use BotKit\Drivers\IDriver;
 use BotKit\Entities\{User as UserEntity, Platform};
+
+use BotKit\Models\Events\IEvent;
 use BotKit\Models\User as UserModel;
-use BotKit\Enums\State;
 use BotKit\Models\Events\TextMessageEvent;
+use BotKit\Models\Events\CallbackEvent;
+
+use BotKit\Enums\State;
+use BotKit\Enums\CallbackType;
 
 class Bot {
 
@@ -122,36 +126,6 @@ class Bot {
     }
 
     // Подключает обработчик события
-    //~ public function on(
-        //~ string $event_classname,
-        //~ callable $check,
-        //~ callable $callback
-    //~ ) : void
-    //~ {
-
-        //~ if (!is_a(self::$event, $event_classname, true)) {
-            //~ // Если подключается обработчик события класса $event_classname,
-            //~ // а в этом запросе обрабатывается событие другого класса, то
-            //~ // и привязывать обработчик нет необходимости
-            //~ return;
-        //~ }
-
-        //~ // Проверка условия события
-        //~ $check_params = [
-            //~ 'e' => self::$event,
-            //~ 'u' => self::$event->getUser(),
-            //~ 'driver' => self::$driver
-        //~ ];
-
-        //~ $result = call_user_func_array($check, $check_params);
-        //~ if ($result == false) {
-            //~ // Обрабатываемое событие - не для этого обработчика
-            //~ return;
-        //~ }
-        //~ self::processRequest($callback, []);
-    //~ }
-
-    // Подключает обработчик события
     public static function onEvent(string $event_classname, string $callback) {
         if (!is_a(self::$event, $event_classname, true)) {
             // Событие, которое сейчас обрабатывается - это не событие,
@@ -164,7 +138,7 @@ class Bot {
     // Подключает обработчик команды
     // Команда должна быть только текстовым сообщением
     public static function onCommand(string $template, string $callback) {
-        if (!is_a(self::$event, TextMessageEvent::class, true)) {
+        if (!is_a(self::$event, TextMessageEvent::class)) {
             // Не текстовое сообщение
             return;
         }
@@ -211,7 +185,7 @@ class Bot {
             return;
         }
         
-        if (is_a(self::$event->getChat(), GroupChat::class, true) == $should_be_from_group_chat) {
+        if (is_a(self::$event->getChat(), GroupChat::class) == $should_be_from_group_chat) {
             return;
         }
         
@@ -223,19 +197,19 @@ class Bot {
     }
 
     // Подключает обработчик обратного вызова
-    public function onCallback(CallbackType $callbackType, callable $responseCallback) {
+    public static function onCallback(CallbackType $type, string $callback) {
         if (!is_a(self::$event, CallbackEvent::class)) {
             // Не событие обратного вызова
             return;
         }
 
-        if (self::$event->getCallbackType() != $callbackType) {
-            // Этот тип обратного вызова не подходит
+        if (self::$event->getCallbackType() != $type) {
+            // Тип обратного вызова не подходит
             return;
         }
 
         // Вызов обработки
-        self::processRequest($responseCallback, []);
+        self::processRequest($callback, self::$event->getCallbackData());
     }
 
     // Подключает обработчик текстового для состояния пользователя

@@ -7,6 +7,10 @@ use BotKit\Controller;
 use BotKit\Enums\State;
 
 class TestController extends Controller {
+    
+    public function cbHelloWorld() {
+        $this->replyText("Привет, мир!");
+    }
 
     public function info($id) {
         $user_name = $this->d->getUserName($id);

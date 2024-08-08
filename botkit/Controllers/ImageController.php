@@ -41,7 +41,7 @@ class ImageController extends Controller {
     
     public function ytPreview($yt_id) {
         // wait section
-        $wait_message = M::create("Изображения скачиваеюся...");
+        $wait_message = M::create("Изображения скачиваются...");
         $this->reply($wait_message);
         
         // general section

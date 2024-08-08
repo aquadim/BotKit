@@ -1,19 +1,20 @@
 <?php
-// Интерфейс события
+// Событие обратного вызова
 
 namespace BotKit\Models\Events;
 
 use BotKit\Models\User;
 use BotKit\Models\Chats\IChat;
+use BotKit\Enums\CallbackType;
 
-class TextMessageEvent implements IEvent {
-
+class CallbackEvent implements IEvent {
+    
     public function __construct(
         protected string $message_id,
         protected User $user,
         protected IChat $chat,
-        protected string $text,
-        protected array $attachments,
+        protected CallbackType $type,
+        protected array $data
     ) {}
     
     public function getUser() : User {
@@ -23,16 +24,16 @@ class TextMessageEvent implements IEvent {
     public function getChat() : IChat {
         return $this->chat;
     }
-
-    public function getMessageId() : string {
-        return $this->message_id;
-    }
-
+    
     public function getText() : string {
-        return $this->text;
+        return "";
     }
-
-    public function getAttachments() : array {
-        return $this->attachments;
+    
+    public function getCallbackType() : CallbackType {
+        return $this->type;
+    }
+    
+    public function getCallbackData() : array {
+        return $this->data;
     }
 }

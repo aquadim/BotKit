@@ -9,6 +9,7 @@ use BotKit\Database;
 use BotKit\Enums\PhotoAttachmentType;
 use BotKit\Enums\State;
 use BotKit\Enums\ButtonColor;
+use BotKit\Enums\CallbackType;
 
 use BotKit\Models\Chats\IChat;
 use BotKit\Models\Chats\DirectChat;
@@ -20,6 +21,7 @@ use BotKit\Models\Messages\TextMessage;
 use BotKit\Models\Events\IEvent;
 use BotKit\Models\Events\UnknownEvent;
 use BotKit\Models\Events\TextMessageEvent;
+use BotKit\Models\Events\CallbackEvent;
 
 use BotKit\Models\Keyboards\IKeyboard;
 use BotKit\Models\Keyboards\TextKeyboard;
@@ -27,6 +29,7 @@ use BotKit\Models\Keyboards\InlineKeyboard;
 
 use BotKit\Models\KeyboardButtons\TextKeyboardButton;
 use BotKit\Models\KeyboardButtons\UrlKeyboardButton;
+use BotKit\Models\KeyboardButtons\CallbackButton;
 
 class VkComDriver implements IDriver {
 
@@ -125,10 +128,27 @@ class VkComDriver implements IDriver {
         $object = $this->post_body["object"];
         $chat_with_user = new DirectChat($this->getUserIdOnPlatform());
         
-        if ($object["message"]["peer_id"] > 2000000000) {
-            $chat_of_msg = new GroupChat($object["message"]["peer_id"]);
-        } else {
-            $chat_of_msg = $chat_with_user;
+        // Узнаём чат события
+        switch ($type) {
+            case "message_new":
+                if ($object["message"]["peer_id"] > 2000000000) {
+                    $chat_of_msg = new GroupChat($object["message"]["peer_id"]);
+                } else {
+                    $chat_of_msg = $chat_with_user;
+                }
+                break;
+                
+            case "message_event":
+                if ($object["peer_id"] > 2000000000) {
+                    $chat_of_msg = new GroupChat($object["peer_id"]);
+                } else {
+                    $chat_of_msg = $chat_with_user;
+                }
+                break;
+            
+            default:
+                $chat_of_msg = $chat_with_user;
+                break;
         }
         
         // Закрываем соединение для того чтобы скрипт мог работать больше чем 10 секунд
@@ -155,6 +175,24 @@ class VkComDriver implements IDriver {
                     $chat_of_msg,
                     $object["message"]["text"],
                     []
+                );
+            
+            case "message_event":
+                $payload = $object["payload"];
+                
+                $this->execApiMethod('messages.sendMessageEventAnswer', [
+                    'event_id' => $object['event_id'],
+                    'user_id' => $object['user_id'],
+                    'peer_id' => $object['peer_id'],
+                    'event_data' => ''
+                ]);
+                
+                return new CallbackEvent(
+                    $object["event_id"],
+                    $user_model,
+                    $chat_of_msg,
+                    CallbackType::from($payload["type"]),
+                    $payload["data"]
                 );
             
             default:
@@ -221,7 +259,7 @@ class VkComDriver implements IDriver {
             "keyboard" => $keyboard_markup
         ]);
         
-        // $this->showContent("vk api response", $response);
+        //$this->showContent("vk api response", $response);
         
         $msg->setId(strval($response["response"]));
         $msg->setChat($chat);
@@ -292,7 +330,15 @@ class VkComDriver implements IDriver {
                         "label" => $button->getText(),
                         "payload" => json_encode($button->getValue())
                     ];
+                } else if (is_a($button, CallbackButton::class)) {
+                    // Кнопка обратного вызова
+                    $button_action = [
+                        "type" => "callback",
+                        "label" => $button->getText(),
+                        "payload" => json_encode($button->getValue())
+                    ];
                 } else if (is_a($button, UrlKeyboardButton::class)) {
+                    // Кнопка-ссылка
                     $button_action = [
                         "type" => "open_link",
                         "link" => $button->getValue(),

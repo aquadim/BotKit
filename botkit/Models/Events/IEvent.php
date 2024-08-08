@@ -13,4 +13,7 @@ interface IEvent {
 
     // Возвращает чат, из которого был вызвано это событие
     public function getChat() : IChat;
+    
+    // Возвращает текст сообщения
+    public function getText() : string;
 }

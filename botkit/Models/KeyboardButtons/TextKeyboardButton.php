@@ -10,51 +10,37 @@ use BotKit\Enums\ButtonColor;
 class TextKeyboardButton implements IKeyboardButton {
     
     protected string $text;
-    
-    protected array $payload;
-    
     protected ButtonColor $color;
     
     public function __construct(
         string $text,
         ButtonColor $color = ButtonColor::Primary,
-        ?array $payload = null
     )
     {
         $this->text = $text;
         $this->color = $color;
-        if ($payload == null) {
-            $this->payload = [];
-        } else {
-            $this->payload = $payload;
-        }
     }
     
     public function setText(string $text) : void {
         $this->text = $text;
     }
     
-    // Возвращает текст, отображаемый на кнопке
     public function getText() : string {
         return $this->text;
     }
 
-    // Устанавливает значение клавиатуры
     public function setValue($value) : void {
-        $this->payload = $value;
+        throw new \Exception("Additional value is not supported");
     }
     
-    // Возвращает значение клавиатуры
     public function getValue() {
-        return $this->payload;
+        throw new \Exception("Additional value is not supported");
     }
     
-    // Устанавливает цвет
     public function setColor(ButtonColor $color) : void {
         $this->color = $color;
     }
     
-    // Возвращает цвет
     public function getColor() : ButtonColor {
         return $this->color;
     }

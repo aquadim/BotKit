@@ -7,9 +7,7 @@ use BotKit\Enums\ButtonColor;
 class UrlKeyboardButton implements IKeyboardButton {
     
     protected string $text;
-    
     protected string $url;
-    
     protected ButtonColor $color;
     
     public function __construct(
