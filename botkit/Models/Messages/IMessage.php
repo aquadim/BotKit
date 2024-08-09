@@ -37,4 +37,16 @@ interface IMessage {
     
     // Возвращает клавиатуру
     public function getKeyboard() : ?IKeyboard;
+    
+    // Устанавливает id сообщения, на которое сообщение явно отвечает
+    public function setReplyId(string $message_id) : void;
+    
+    // Помощник: setReplyId только для объекта IMessage
+    public function setReplyMessage(IMessage $msg) : void;
+    
+    // Возвращает id сообщения, на которое сообщение явно отвечает
+    public function getReplyId() : string;
+    
+    // Возвращает true если сообщение явно отвечает на какое-либо
+    public function isReplying() : bool;
 }

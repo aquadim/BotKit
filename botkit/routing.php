@@ -10,6 +10,8 @@ use BotKit\Enums\CallbackType;
 Bot::onCallback(CallbackType::HelloWorld, 'TestController@cbHelloWorld');
 Bot::onCallback(CallbackType::YoutubeShowPreview, 'ImageController@ytPreview');
 
+Bot::onCommand("/replyToMe {text}", 'TestController@replyToMe');
+
 Bot::onCommand("/setstate {state_id}", 'TestController@setState');
 Bot::onCommand("/info {id}", 'TestController@info');
 

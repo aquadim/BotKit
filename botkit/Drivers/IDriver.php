@@ -22,15 +22,6 @@ interface IDriver {
     // $user_model - модель пользователя
     public function getEvent(UserModel $user_model) : IEvent;
 
-    // Отвечает на текстовое сообщение
-    // Если empathise=true, сообщение должно быть явным ответом
-    // $e - событие, на которое создаётся ответ
-    // $msg - сообщение ответа
-    public function reply(
-        TextMessageEvent $e,
-        IMessage $msg,
-        bool $empathise = true) : void;
-
     // Отсылает сообщение пользователю в личный чат между ботом и пользователем
     public function sendDirectMessage(UserModel $user, IMessage $msg) : void;
 

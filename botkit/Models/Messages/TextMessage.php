@@ -11,16 +11,16 @@ class TextMessage implements IMessage {
 
 	// ID сообщения
 	protected string $id;
-	
+    // ID сообщения, на которое сообщение отвечает
+    protected string $reply_to;
+    // true, если сообщение отвечает на какое-либо
+    protected bool $is_replying;
 	// Текст сообщения
 	protected string $text;
-	
 	// Вложения: изображения в сообщении
 	protected array $photos;
-	
 	// Клавиатура
 	protected ?IKeyboard $keyboard;
-	
 	// Чат, в который было отправлено сообщение
 	protected IChat $chat;
 
@@ -28,6 +28,7 @@ class TextMessage implements IMessage {
 		$this->text = $text;
 		$this->photos = $photos;
 		$this->keyboard = null;
+        $this->is_replying = false;
 	}
 
 	// Создаёт сообщение с текстом $text
@@ -74,4 +75,22 @@ class TextMessage implements IMessage {
 	public function getChat() : IChat {
 		return $this->chat;
 	}
+    
+    public function setReplyId(string $message_id) : void {
+        $this->reply_to = $message_id;
+        $this->is_replying = true;
+    }
+    
+    public function setReplyMessage(IMessage $msg) : void {
+        $this->reply_to = $msg->getId();
+        $this->is_replying = true;
+    }
+    
+    public function getReplyId() : string {
+        return $this->reply_to;
+    }
+    
+    public function isReplying() : bool {
+        return $this->is_replying;
+    }
 }

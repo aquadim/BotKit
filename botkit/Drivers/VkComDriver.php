@@ -199,39 +199,36 @@ class VkComDriver implements IDriver {
                 return new UnknownEvent($user_model, $chat_of_msg);
         }
     }
-    
-    public function reply(
-        TextMessageEvent $e,
-        IMessage $msg,
-        bool $empathise = true) : void
-    {
-        if ($empathise) {
-            $reply_to_id = $e->getMessageID();
-        } else {
-            $reply_to_id = -1;
-        }
-        $this->sendInternal($msg, $reply_to_id);
-    }
 
     public function sendDirectMessage(UserModel $user, IMessage $msg) : void {
+        $attachment_strings = $this->getAttachmentStrings($msg->getPhotos());
+        $keyboard_string = $this->getKeyboardString($msg->getKeyboard());
+        $reply_to_string = $this->getReplyToString($msg);
+        
         $this->execApiMethod("messages.send",
         [
             "user_id" => $user->getIdOnPlatform(),
             "random_id" => 0,
-            "message" => $msg->getText()
+            "message" => $msg->getText(),
+            "reply_to" => $reply_to_string,
+            "attachment" => implode(",", $attachment_strings),
+            "keyboard" => $keyboard_string
         ]);
     }
     
     public function editMessage(IMessage $old, IMessage $new) : void {
         $attachment_strings = $this->getAttachmentStrings($new->getPhotos());
+        $keyboard_string = $this->getKeyboardString($msg->getKeyboard());
+        $reply_to_string = $this->getReplyToString($msg);
         
-        // Выполнение метода API
         $this->execApiMethod("messages.edit",
         [
             "peer_id" => $old->getChat()->getIdOnPlatform(),
             "random_id" => 0,
             "message" => $new->getText(),
             "attachment" => implode(",", $attachment_strings),
+            "reply_to" => $reply_to_string,
+            "keyboard" => $keyboard_string,
             "message_id" => $old->getId()
         ]);
         
@@ -241,22 +238,17 @@ class VkComDriver implements IDriver {
 
     public function sendToChat(IChat $chat, IMessage $msg) : void {
         $attachment_strings = $this->getAttachmentStrings($msg->getPhotos());
+        $keyboard_string = $this->getKeyboardString($msg->getKeyboard());
+        $reply_to_string = $this->getReplyToString($msg);
         
-        $kb_obj = $msg->getKeyboard();
-        if ($kb_obj != null) {
-            $keyboard_markup = self::getKeyboardMarkup($kb_obj);
-        } else {
-            $keyboard_markup = "";
-        }
-        
-        // Выполнение метода отправки
         $response = $this->execApiMethod("messages.send",
         [
             "peer_id" => $chat->getIdOnPlatform(),
             "random_id" => 0,
             "message" => $msg->getText(),
+            "reply_to" => $reply_to_string,
             "attachment" => implode(",", $attachment_strings),
-            "keyboard" => $keyboard_markup
+            "keyboard" => $keyboard_string
         ]);
         
         //$this->showContent("vk api response", $response);
@@ -380,6 +372,7 @@ class VkComDriver implements IDriver {
     }
     #endregion
     
+    // Сохраняет в драйвер сервер для загрузки фотографий в сообщения
     protected function getUploadURLPhoto() : string {
         if (isset($this->uploadurl_photo)) {
             return $this->uploadurl_photo;
@@ -425,6 +418,8 @@ class VkComDriver implements IDriver {
             $response['response'][0]['id'];
     }
     
+    // Возвращает строку, которую можно использовать как поле
+    // attachment при отправке/редактирования сообщения
     protected function getAttachmentStrings($photos) : array {
         $attachment_strings = [];
         
@@ -432,6 +427,7 @@ class VkComDriver implements IDriver {
         foreach ($photos as $photo) {
             switch ($photo->getType()) {
                 case PhotoAttachmentType::FromFile:
+                    // Загружаем на сервер
                     $attachment = $this->uploadImage($photo->getValue());
                     $attachment_strings[] = $attachment;
                     $photo->setId($attachment);
@@ -459,5 +455,23 @@ class VkComDriver implements IDriver {
         }
         
         return $attachment_strings;
+    }
+    
+    // Возвращает строку, которую можно использовать как поле
+    // keyboard при отправке/редактирования сообщения
+    protected function getKeyboardString(?IKeyboard $kb_obj) : string {
+        if ($kb_obj == null) {
+            return "";
+        }
+        return self::getKeyboardMarkup($kb_obj);
+    }
+
+    // Возвращает строку -- id сообщения на которое отвечает сообщение
+    protected function getReplyToString(IMessage $msg) : string {
+        if ($msg->isReplying()) {
+            return $msg->getReplyId();
+        } else {
+            return "";
+        }
     }
 }

@@ -5,8 +5,15 @@ namespace BotKit\Controllers;
 
 use BotKit\Controller;
 use BotKit\Enums\State;
+use BotKit\Models\Messages\TextMessage as M;
 
 class TestController extends Controller {
+    
+    public function replyToMe($text) {
+        $m = M::create($text);
+        $this->setReplyIdFor($m);
+        $this->reply($m);
+    }
     
     public function cbHelloWorld() {
         $this->replyText("Привет, мир!");

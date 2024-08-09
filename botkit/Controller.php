@@ -40,15 +40,24 @@ class Controller {
         $this->d->sendToChat($this->e->getChat(), new TextMessage($text, []));
     }
     
+    // Отправляет текстовое сообщение ПОЛЬЗОВАТЕЛЮ, вызвавшему сообщение
     protected function replyDM(TextMessage $msg) {
         $this->d->sendDirectMessage($this->u, $msg);
     }
-        
+     
+    // Отвечает текстовое сообщение В ЧАТ
     protected function reply(TextMessage $msg) {
         $this->d->sendToChat($this->e->getChat(), $msg);
     }
     
+    // Редактирует сообщение
     protected function edit(IMessage $old, IMessage $new) {
         $this->d->editMessage($old, $new);
+    }
+    
+    // Устанавливает для сообщения id ответа из входящего события
+    // Событие обязано присылать сообщение.
+    protected function setReplyIdFor(IMessage $msg) {
+        $msg->setReplyId($this->e->getMessageId());
     }
 }
