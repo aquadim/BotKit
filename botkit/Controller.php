@@ -58,6 +58,9 @@ class Controller {
     // Устанавливает для сообщения id ответа из входящего события
     // Событие обязано присылать сообщение.
     protected function setReplyIdFor(IMessage $msg) {
+        if (!is_a($this->e, TextMessage::class)) {
+            throw new \Exception("Current event did not send message to reply for");
+        }
         $msg->setReplyId($this->e->getMessageId());
     }
 }

@@ -6,8 +6,9 @@ require_once __DIR__."/../botkit/bootstrap.php";
 use BotKit\Drivers\VkComDriver;
 
 use BotKit\Keyboards\TestKeyboard;
+use BotKit\Keyboards\YTThumbnailKeyboard;
 
-$keyboards = [new TestKeyboard()];
+$keyboards = [new TestKeyboard(), new YTThumbnailKeyboard("hello")];
 
 foreach ($keyboards as $kb) {
     if (!$kb->isCacheable()) {
@@ -15,4 +16,5 @@ foreach ($keyboards as $kb) {
     }
     $cache = VkComDriver::getKeyboardMarkup($kb);
     echo $cache;
+    echo "\n";
 }
